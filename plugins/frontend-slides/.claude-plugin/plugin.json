@@ -1,14 +1,14 @@
 {
   "name": "frontend-slides",
-  "version": "2.1.0",
-  "description": "Zero-dependency HTML presentation generator with safe presets, bold template-library styles, PPT conversion, and anti-AI-slop design philosophy.",
+  "version": "3.0.0",
+  "description": "Zero-dependency HTML presentation generator — fixed 16:9 stage, always-multi-theme design-system switcher (getdesign.md, shortcuts, favorites, H/? help), batched Refinement Mode, plus presets/templates/PPT from the base toolkit.",
   "skills": "./skills/",
   "author": {
-    "name": "zarazhangrui",
-    "url": "https://github.com/zarazhangrui"
+    "name": "hozoon",
+    "url": "https://github.com/zoona"
   },
-  "homepage": "https://github.com/zarazhangrui/frontend-slides",
-  "repository": "https://github.com/zarazhangrui/frontend-slides",
+  "homepage": "https://github.com/zoona/frontend-slides-zoona",
+  "repository": "https://github.com/zoona/frontend-slides-zoona",
   "license": "MIT",
-  "keywords": ["presentations", "slides", "html", "design", "powerpoint", "animations", "templates"]
+  "keywords": ["presentations", "slides", "html", "design", "themes", "design-systems", "powerpoint", "animations", "templates"]
 }

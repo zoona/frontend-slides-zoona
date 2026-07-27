@@ -1,133 +1,234 @@
-/* ===========================================
-   FIXED 16:9 STAGE: MANDATORY BASE STYLES
-   Include this ENTIRE file in every presentation.
-   Slides are authored at 1920×1080 and scaled as a whole.
-   =========================================== */
+/* ============================================================================
+   viewport-base.css  —  frontend-slides fixed 16:9 stage (MANDATORY, include in full)
+   ----------------------------------------------------------------------------
+   Copy the ENTIRE contents of this file into every deck's <style> block.
+   It provides:
+     - a viewport wrapper that fills the window and letterboxes/pillarboxes
+     - a fixed 1920x1080 stage that scales UNIFORMLY (never re-layouts)
+     - slide switching via .active / .visible using visibility+opacity+pointer-
+       events ONLY (never display:none — see SKILL.md line 54)
+     - staggered .reveal load-in animations
+     - prefers-reduced-motion support
 
-/* 1. Lock the browser viewport */
-html,
+   REQUIRED: also paste the "DECK BOOTSTRAP SCRIPT" at the bottom of this file
+   into the deck's <script>. Without it --deck-scale stays 1 and the stage will
+   overflow the viewport.
+
+   Decks OVERRIDE colors/fonts/spacing via their own :root variables and layout
+   classes. This file only owns the stage mechanics — keep those intact.
+   ========================================================================== */
+
+/* === RESET (minimal) ====================================================== */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; }
+html { -webkit-text-size-adjust: 100%; }
 body {
-    width: 100%;
-    height: 100%;
-    margin: 0;
-    overflow: hidden;
-    background: var(--stage-bg, #000);
+  background: #000;               /* the letterbox / pillarbox bars */
+  overflow: hidden;               /* deck never scrolls */
+  font-family: system-ui, sans-serif; /* decks override this */
 }
+img, svg, video { display: block; max-width: 100%; }
 
-/* 2. Full-window deck viewport */
+/* === VIEWPORT WRAPPER — fills the browser window ========================== */
 .deck-viewport {
-    position: fixed;
-    inset: 0;
-    overflow: hidden;
-    background: var(--stage-bg, #000);
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #000;
 }
 
-/* 3. Fixed 16:9 design canvas.
-   JavaScript sets transform: translate(...) scale(...). */
+/* === FIXED 1920x1080 STAGE — scales as a whole, never reflows ============= */
 .deck-stage {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 1920px;
-    height: 1080px;
-    overflow: hidden;
-    transform-origin: 0 0;
-    background: var(--slide-bg, #fff);
+  position: relative;
+  width: 1920px;
+  height: 1080px;
+  flex: 0 0 auto;
+  transform: scale(var(--deck-scale, 1));
+  transform-origin: center center;
+  overflow: hidden;
+  /* All slide content is authored at true 1920x1080 px measurements. */
 }
 
-/* 4. Slides stack inside the fixed stage.
-   Content must be laid out at 1920×1080, not reflowed per device. */
+/* === SLIDES — stacked layers, switched by class ONLY ====================== */
+/* Visibility is driven by .active/.visible with visibility+opacity+pointer-
+   events. Never use display:none/block for switching: a later
+   `.slide-content{display:flex}` would override display and reveal every slide
+   at once. visibility on the .slide layer hides its children regardless. */
 .slide {
-    position: absolute;
-    inset: 0;
-    width: 1920px;
-    height: 1080px;
-    overflow: hidden;
-    display: block;
-    visibility: hidden;
-    opacity: 0;
-    pointer-events: none;
-    background: var(--slide-bg, #fff);
+  position: absolute;
+  inset: 0;
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .5s ease;
 }
-
 .slide.active,
 .slide.visible {
-    visibility: visible;
-    opacity: 1;
-    pointer-events: auto;
-    z-index: 1;
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
 }
 
-/* 5. Keep media inside authored slide bounds */
-img,
-video,
-canvas,
-svg {
-    max-width: 100%;
-    max-height: 100%;
+/* Common inner container hook. Decks may set display:flex/grid here safely —
+   it cannot un-hide an inactive parent .slide. */
+.slide-content {
+  position: absolute;
+  inset: 0;
 }
 
-/* 6. Presentation chrome stays outside the slide design system */
-.deck-controls {
-    position: fixed;
-    left: 50%;
-    bottom: 22px;
-    transform: translateX(-50%);
-    z-index: 1000;
+/* === REVEAL — staggered load-in on the active slide ====================== */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity .6s ease, transform .6s ease;
+}
+.slide.active .reveal { opacity: 1; transform: none; }
+
+/* Stagger: prefer inline `style="--i:N"`; nth-child is a no-JS fallback. */
+.slide.active .reveal { transition-delay: calc(var(--i, 0) * .09s); }
+.slide.active .reveal:nth-child(1) { transition-delay: calc(var(--i, 0) * .09s + .05s); }
+.slide.active .reveal:nth-child(2) { transition-delay: calc(var(--i, 1) * .09s + .05s); }
+.slide.active .reveal:nth-child(3) { transition-delay: calc(var(--i, 2) * .09s + .05s); }
+.slide.active .reveal:nth-child(4) { transition-delay: calc(var(--i, 3) * .09s + .05s); }
+.slide.active .reveal:nth-child(5) { transition-delay: calc(var(--i, 4) * .09s + .05s); }
+.slide.active .reveal:nth-child(6) { transition-delay: calc(var(--i, 5) * .09s + .05s); }
+.slide.active .reveal:nth-child(7) { transition-delay: calc(var(--i, 6) * .09s + .05s); }
+.slide.active .reveal:nth-child(8) { transition-delay: calc(var(--i, 7) * .09s + .05s); }
+
+/* === OFF-STAGE UI (nav dots, page number, switcher) ====================== */
+/* clamp() is allowed here because these live OUTSIDE the fixed stage. */
+.deck-ui {
+  position: fixed;
+  z-index: 9999;
+  font-family: system-ui, sans-serif;
+  font-size: clamp(11px, 1.2vw, 14px);
 }
 
-/* 7. Print one fixed-size slide per page */
-@media print {
-    html,
-    body {
-        width: 1920px;
-        height: auto;
-        overflow: visible;
-        background: #fff;
-    }
-
-    .deck-viewport {
-        position: static;
-        overflow: visible;
-        background: #fff;
-    }
-
-    .deck-stage {
-        position: static;
-        width: auto;
-        height: auto;
-        transform: none !important;
-        background: none;
-    }
-
-    .slide {
-        position: relative;
-        display: block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        pointer-events: auto !important;
-        width: 1920px;
-        height: 1080px;
-        break-after: page;
-        page-break-after: always;
-    }
-
-    .slide:last-child {
-        break-after: auto;
-        page-break-after: auto;
-    }
-
-    .deck-controls {
-        display: none !important;
-    }
-}
-
-/* 8. Reduced motion */
+/* === REDUCED MOTION ====================================================== */
 @media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
-        animation-duration: 0.01ms !important;
-        transition-duration: 0.2s !important;
-    }
+  .slide { transition: none; }
+  .reveal { transition: none; opacity: 1; transform: none; }
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+    scroll-behavior: auto !important;
+  }
 }
+
+/* === HELP OVERLAY (H / ?) — every deck gets this, built by the bootstrap === */
+/* Theme-aware via var() with safe fallbacks (works even with no theme vars). */
+.deck-help { position: fixed; inset: 0; z-index: 10000; display: none;
+  align-items: center; justify-content: center;
+  background: rgba(0,0,0,.55); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.deck-help.open { display: flex; }
+.deck-help-card { width: min(560px, 86vw);
+  background: var(--bg-2, #1a1a1a); color: var(--fg, #fff);
+  border: 1px solid var(--line, rgba(128,128,128,.3)); border-radius: 20px;
+  padding: 30px 34px; box-shadow: 0 30px 80px rgba(0,0,0,.5);
+  font-family: 'Space Mono', ui-monospace, monospace; }
+.deck-help-card h2 { margin: 0 0 18px; font-size: 14px; letter-spacing: .24em;
+  text-transform: uppercase; color: var(--accent, #e0a53f); }
+.deck-help-sec { margin-top: 16px; }
+.deck-help-sec.first { margin-top: 0; }
+.deck-help-sec > .t { font-size: 11px; letter-spacing: .2em; text-transform: uppercase;
+  color: var(--muted, #999); margin-bottom: 8px; }
+.deck-help-row { display: flex; align-items: center; gap: 14px; padding: 7px 0;
+  border-bottom: 1px solid var(--line, rgba(128,128,128,.2)); }
+.deck-help-row:last-child { border-bottom: 0; }
+.deck-help-row .k { flex: 0 0 148px; display: flex; gap: 6px; flex-wrap: wrap; }
+.deck-help-row kbd { font: 700 12px/1 'Space Mono', monospace; padding: 6px 9px;
+  border-radius: 7px; background: var(--bg, #000);
+  border: 1px solid var(--line, rgba(128,128,128,.3)); color: var(--fg, #fff); white-space: nowrap; }
+.deck-help-row .d { font-size: 13px; color: var(--muted, #999); }
+.deck-help-hint { margin-top: 16px; font-size: 11px; color: var(--muted, #999);
+  text-align: center; letter-spacing: .06em; }
+
+/* ============================================================================
+   DECK BOOTSTRAP SCRIPT  —  paste into the deck's <script> (REQUIRED)
+   ----------------------------------------------------------------------------
+   Computes the uniform letterbox scale, wires arrow/space/swipe navigation, and
+   builds the H/? help overlay (every deck gets it). Add-ons (e.g. the theme
+   switcher) register extra shortcut rows via window.deckHelp.addSection(title, rows).
+   Expects: one `.deck-stage` and N `.slide` elements; one may start `.active`.
+
+   <script>
+   (function () {
+     var stage  = document.querySelector('.deck-stage');
+     var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+     if (!stage || !slides.length) return;
+
+     var i = slides.findIndex(function (s) { return s.classList.contains('active'); });
+     if (i < 0) i = 0;
+
+     function fit() {
+       // uniform scale = min(fit-to-width, fit-to-height) — letterboxes cleanly
+       var s = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+       document.documentElement.style.setProperty('--deck-scale', s);
+     }
+     function show(n) {
+       i = (n + slides.length) % slides.length;
+       slides.forEach(function (s, k) { s.classList.toggle('active', k === i); });
+       document.documentElement.style.setProperty('--slide', i); // optional hook
+     }
+
+     // --- HELP OVERLAY (H / ?) — built here so EVERY deck has it ---
+     var sections = [{ title: '', rows: [
+       ['←  →  Space', '슬라이드 이동'],
+       ['Home  End', '처음 / 끝'],
+       ['H  ?', '도움말 열기 / 닫기']
+     ] }];
+     var help = document.createElement('div');
+     help.className = 'deck-help';
+     function esc(s){ return String(s).replace(/[&<>]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c]; }); }
+     function render() {
+       var body = sections.map(function (sec, si) {
+         var rows = sec.rows.map(function (r) {
+           var keys = r[0].split(/\s+/).map(function (k) { return '<kbd>' + esc(k) + '</kbd>'; }).join('');
+           return '<div class="deck-help-row"><span class="k">' + keys + '</span><span class="d">' + esc(r[1]) + '</span></div>';
+         }).join('');
+         return '<div class="deck-help-sec' + (si === 0 ? ' first' : '') + '">' +
+                (sec.title ? '<div class="t">' + esc(sec.title) + '</div>' : '') + rows + '</div>';
+       }).join('');
+       help.innerHTML = '<div class="deck-help-card"><h2>단축키</h2>' + body +
+         '<div class="deck-help-hint">H · ? · Esc · 바깥 클릭으로 닫기</div></div>';
+       help.querySelector('.deck-help-card').addEventListener('click', function (e) { e.stopPropagation(); });
+     }
+     function toggleHelp(force) { help.classList.toggle('open', force == null ? !help.classList.contains('open') : force); }
+     render();
+     help.addEventListener('click', function (e) { if (e.target === help) toggleHelp(false); });
+     document.body.appendChild(help);
+     // add-on hook: theme switcher etc. append their shortcut sections here
+     window.deckHelp = { addSection: function (title, rows) { sections.push({ title: title, rows: rows }); render(); }, toggle: toggleHelp };
+
+     window.addEventListener('resize', fit);
+     fit();
+     show(i);
+
+     window.addEventListener('keydown', function (e) {
+       var tn = e.target && e.target.tagName;
+       if (tn && /^(INPUT|SELECT|TEXTAREA)$/.test(tn)) return;
+       if (e.key === 'h' || e.key === 'H' || e.key === '?') { e.preventDefault(); toggleHelp(); return; }
+       if (e.key === 'Escape') { toggleHelp(false); return; }
+       if (e.altKey || e.metaKey || e.ctrlKey) return; // 수식키 조합은 애드온(테마 스위처)에 양보
+       if (['ArrowRight', 'ArrowDown', ' ', 'PageDown'].indexOf(e.key) > -1) { e.preventDefault(); show(i + 1); }
+       else if (['ArrowLeft', 'ArrowUp', 'PageUp'].indexOf(e.key) > -1)      { e.preventDefault(); show(i - 1); }
+       else if (e.key === 'Home') { show(0); }
+       else if (e.key === 'End')  { show(slides.length - 1); }
+     });
+
+     // touch swipe (phones/tablets keep the 16:9 stage — no reflow)
+     var x0 = null;
+     window.addEventListener('touchstart', function (e) { x0 = e.touches[0].clientX; }, { passive: true });
+     window.addEventListener('touchend', function (e) {
+       if (x0 == null) return;
+       var dx = e.changedTouches[0].clientX - x0;
+       if (Math.abs(dx) > 40) show(i + (dx < 0 ? 1 : -1));
+       x0 = null;
+     }, { passive: true });
+   })();
+   </script>
+   ========================================================================== */

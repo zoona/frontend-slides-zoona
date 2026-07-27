@@ -1,0 +1,1236 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>frontend-slides · 템플릿 데모</title>
+
+<!-- 폰트: 라이브러리 대체 폰트 (Linear Display/Notion Sans→Inter Tight, Copernicus/Tiempos→Fraunces) + 한글 폴백 + 모노 -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,400..500&family=Inter+Tight:wght@300..700&family=Noto+Serif+KR:wght@300;500;700&family=Noto+Sans+KR:wght@300;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+
+<style>
+/* ============================================================================
+   viewport-base.css  —  frontend-slides 고정 16:9 스테이지 (전체 삽입)
+   ========================================================================== */
+
+/* === RESET (minimal) ====================================================== */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  background: #000;               /* 레터박스 / 필러박스 바 */
+  overflow: hidden;               /* 덱은 스크롤되지 않음 */
+  font-family: system-ui, sans-serif;
+}
+img, svg, video { display: block; max-width: 100%; }
+
+/* === VIEWPORT WRAPPER — 브라우저 창을 채움 =============================== */
+.deck-viewport {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #000;
+}
+
+/* === FIXED 1920x1080 STAGE — 통째로 스케일, 재배치 없음 ================= */
+.deck-stage {
+  position: relative;
+  width: 1920px;
+  height: 1080px;
+  flex: 0 0 auto;
+  transform: scale(var(--deck-scale, 1));
+  transform-origin: center center;
+  overflow: hidden;
+}
+
+/* === SLIDES — 레이어 스택, 클래스로만 전환 ============================== */
+.slide {
+  position: absolute;
+  inset: 0;
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .5s ease;
+}
+.slide.active,
+.slide.visible {
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
+}
+.slide-content {
+  position: absolute;
+  inset: 0;
+}
+
+/* === REVEAL — active 슬라이드에서 스태거 로드인 ========================= */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity .6s ease, transform .6s ease;
+}
+.slide.active .reveal { opacity: 1; transform: none; }
+.slide.active .reveal { transition-delay: calc(var(--i, 0) * .09s); }
+
+/* === OFF-STAGE UI ======================================================== */
+.deck-ui {
+  position: fixed;
+  z-index: 9999;
+  font-family: system-ui, sans-serif;
+  font-size: clamp(11px, 1.2vw, 14px);
+}
+
+/* === REDUCED MOTION ====================================================== */
+@media (prefers-reduced-motion: reduce) {
+  .slide { transition: none; }
+  .reveal { transition: none; opacity: 1; transform: none; }
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================================================
+   THEME TOKENS  —  getdesign.md 라이브러리(~/.claude/design-systems/)에서
+   실제 토큰을 매핑 (EXTERNAL_DESIGN_SYSTEMS.md §3):
+     --bg←canvas  --bg-2←surface  --fg←ink  --muted←ink-subtle
+     --accent←primary  --accent-2←보조 브랜드색  --line←hairline
+   .deck-root 의 theme-* 클래스 교체만으로 전체 리스킨.
+   ========================================================================== */
+:root {                       /* 공유 fallback = Linear */
+  --bg:#010102; --bg-2:#0f1011; --fg:#f7f8f8; --muted:#8a8f98;
+  --accent:#5e6ad2; --accent-2:#828fff;
+  --line:#23252a;
+  --glow-1:rgba(94,106,210,.20); --glow-2:rgba(130,143,255,.12);
+  --stroke-ghost:rgba(94,106,210,.18);
+  --font-display:'Inter Tight','Noto Sans KR',sans-serif;
+  --font-mono:'Space Mono','Noto Sans KR',monospace;
+  --grain-blend:screen;
+}
+
+/* THEME-BLOCKS:START (auto-generated) */
+.theme-linear{
+  --bg:#010102; --bg-2:#0f1011; --fg:#f7f8f8; --muted:#8a8f98;
+  --accent:#5e6ad2; --accent-2:#828fff;
+  --line:#23252a;
+  --glow-1:rgba(94,106,210,0.2); --glow-2:rgba(130,143,255,0.13);
+  --stroke-ghost:rgba(94,106,210,0.16);
+  --font-display:'Inter Tight','Noto Sans KR',sans-serif;
+  --font-mono:'Space Mono','Noto Sans KR',monospace;
+  --grain-blend:screen;
+}
+.theme-airbnb{
+  --bg:#ffffff; --bg-2:#f7f7f7; --fg:#222222; --muted:#6a6a6a;
+  --accent:#ff385c; --accent-2:#e00b41;
+  --line:#dddddd;
+  --glow-1:rgba(255,56,92,0.12); --glow-2:rgba(224,11,65,0.09);
+  --stroke-ghost:rgba(34,34,34,0.07);
+  --font-display:'Inter Tight','Noto Sans KR',sans-serif;
+  --font-mono:'Space Mono','Noto Sans KR',monospace;
+  --grain-blend:multiply;
+}
+.theme-airtable{
+  --bg:#ffffff; --bg-2:#f8fafc; --fg:#181d26; --muted:#41454d;
+  --accent:#181d26; --accent-2:#0d1218;
+  --line:#dddddd;
+  --glow-1:rgba(24,29,38,0.12); --glow-2:rgba(13,18,24,0.09);
+  --stroke-ghost:rgba(24,29,38,0.07);
+  --font-display:'Inter Tight','Noto Sans KR',sans-serif;
+  --font-mono:'Space Mono','Noto Sans KR',monospace;
+  --grain-blend:multiply;
+}
+.theme-apple{
+  --bg:#ffffff; --bg-2:#ffffff; --fg:#1d1d1f; --muted:#838384;
+  --accent:#0066cc; --accent-2:#0071e3;
+  --line:#e0e0e0;
+  --glow-1:rgba(0,102,204,0.12); --glow-2:rgba(0,113,227,0.09);
+  --stroke-ghost:rgba(29,29,31,0.07);
+  --font-display:'Inter Tight','Noto Sans KR',sans-serif;
+  --font-mono:'Space Mono','Noto Sans KR',monospace;
+  --grain-blend:multiply;
+}
+.theme-bmw{
+  --bg:#ffffff; --bg-2:#f7f7f7; --fg:#262626; --muted:#6b6b6b;
+  --accent:#1c69d4; --accent-2:#0653b6;
+  --line:#e6e6e6;
+  --glow-1:rgba(28,105,212,0.12); --glow-2:rgba(6,83,182,0.09);
+  --stroke-ghost:rgba(38,38,38,0.07);
+  --font-display:'Inter Tight','Noto Sans KR',sans-serif;
+  --font-mono:'Space Mono','Noto Sans KR',monospace;
+  --grain-blend:multiply;
+}
+.theme-bmw-m{
+  --bg:#000000; --bg-2:#0d0d0d; --fg:#ffffff; --muted:#7e7e7e;
+  --accent:#ffffff; --accent-2:#ffffff;
+  --line:#3c3c3c;
+  --glow-1:rgba(255,255,255,0.2); --glow-2:rgba(255,255,255,0.13);
+  --stroke-ghost:rgba(255,255,255,0.16);
+  --font-display:'Inter Tight','Noto Sans KR',sans-serif;
+  --font-mono:'Space Mono','Noto Sans KR',monospace;
+  --grain-blend:screen;
+}
+.theme-bugatti{
+  --bg:#000000; --bg-2:#0d0d0d; --fg:#ffffff; --muted:#999999;
+  --accent:#ffffff; --accent-2:#ffffff;
+  --line:#262626;
+  --glow-1:rgba(255,255,255,0.2); --glow-2:rgba(255,255,255,0.13);
+  --stroke-ghost:rgba(255,255,255,0.16);
+  --font-display:'Inter Tight','Noto Sans KR',sans-serif;
+  --font-mono:'Space Mono','Noto Sans KR',monospace;
+  --grain-blend:screen;
+}
+.theme-cal{
+  --bg:#ffffff; --bg-2:#f8f9fa; --fg:#111111; --muted:#6b7280;
+  --accent:#111111; --accent-2:#242424;
+  --line:#e5e7eb;
+  --glow-1:rgba(17,17,17,0.12); --glow-2:rgba(36,36,36,0.09);
+  --stroke-ghost:rgba(17,17,17,0.07);
+  --font-display:'Inter Tight','Noto Sans KR',sans-serif;
+  --font-mono:'Space Mono','Noto Sans KR',monospace;
+  --grain-blend:multiply;
+}
+.theme-claude{
+  --bg:#faf9f5; --bg-2:#f5f0e8; --fg:#141413; --muted:#6c6a64;
+  --accent:#cc785c; --accent-2:#5db8a6;
+  --line:#e6dfd8;
+  --glow-1:rgba(204,120,92,0.12); --glow-2:rgba(93,184,166,0.09);
+  --stroke-ghost:rgba(20,20,19,0.07);
+  --font-display:'Fraunces','Noto Serif KR',serif;
+  --font-mono:'Space Mono','Noto Serif KR',monospace;
+  --grain-blend:multiply;
+}
+.theme-clay{
+  --bg:#fffaf0; --bg-2:#faf5e8; --fg:#0a0a0a; --muted:#6a6a6a;
+  --accent:#0a0a0a; --accent-2:#1f1f1f;
+  --line:#e5e5e5;
+  --glow-1:rgba(10,10,10,0.12); --glow-2:rgba(31,31,31,0.09);
+  --stroke-ghost:rgba(10,10,10,0.07);
+  --font-display:'Inter Tight','Noto Sans KR',sans-serif;
+  --font-mono:'Space Mono','Noto Sans KR',monospace;
+  --grain-blend:multiply;
+}
+.theme-clickhouse{
+  --bg:#0a0a0a; --bg-2:#121212; --fg:#ffffff; --muted:#888888;
+  --accent:#faff69; --accent-2:#e6eb52;
+  --line:#2a2a2a;
+  --glow-1:rgba(250,255,105,0.2); --glow-2:rgba(230,235,82,0.13);
+  --stroke-ghost:rgba(250,255,105,0.16);
+  --font-display:'Inter Tight','Noto Sans KR',sans-serif;
+  --font-mono:'Space Mono','Noto Sans KR',monospace;
+  --grain-blend:screen;
+}
+.theme-cohere{
+  --bg:#ffffff; --bg-2:#ffffff; --fg:#212121; --muted:#93939f;
+  --accent:#17171c; --accent-2:#17171c;
+  --line:#d9d9dd;
+  --glow-1:rgba(23,23,28,0.12); --glow-2:rgba(23,23,28,0.09);
+  --stroke-ghost:rgba(33,33,33,0.07);
+  --font-display:'Inter Tight','Noto Sans KR',sans-serif;
+  --font-mono:'Space Mono','Noto Sans KR',monospace;
+  --grain-blend:multiply;
+}
+.theme-coinbase{
+  --bg:#ffffff; --bg-2:#f7f7f7; --fg:#0a0b0d; --muted:#7c828a;
+  --accent:#0052ff; --accent-2:#003ecc;
+  --line:#dee1e6;
+  --glow-1:rgba(0,82,255,0.12); --glow-2:rgba(0,62,204,0.09);
+  --stroke-ghost:rgba(10,11,13,0.07);
+  --font-display:'Inter Tight','Noto Sans KR',sans-serif;
+  --font-mono:'Space Mono','Noto Sans KR',monospace;
+  --grain-blend:multiply;
+}
+.theme-composio{
+  --bg:#0f0f0f; --bg-2:#0f0f0f; --fg:#ffffff; --muted:#888888;
+  --accent:#0007cd; --accent-2:#0005a3;
+  --line:#222222;
+  --glow-1:rgba(0,7,205,0.2); --glow-2:rgba(0,5,163,0.13);
+  --stroke-ghost:rgba(0,7,205,0.16);
+  --font-display:'Inter Tight','Noto Sans KR',sans-serif;
+  --font-mono:'Space Mono','Noto Sans KR',monospace;
+  --grain-blend:screen;
+}
+.theme-cursor{
+  --bg:#f7f7f4; --bg-2:#fafaf7; --fg:#26251e; --muted:#807d72;
+  --accent:#f54e00; --accent-2:#d04200;
+  --line:#e6e5e0;
+  --glow-1:rgba(245,78,0,0.12); --glow-2:rgba(208,66,0,0.09);
+  --stroke-ghost:rgba(38,37,30,0.07);
+  --font-display:'Inter Tight','Noto Sans KR',sans-serif;
+  --font-mono:'Space Mono','Noto Sans KR',monospace;
+  --grain-blend:multiply;
+}
+.theme-dell-1996{
+  --bg:#ffffff; --bg-2:#ffffff; --fg:#000000; --muted:#000000;
+  --accent:#e91d2a; --accent-2:#e91d2a;
+  --line:rgba(0,0,0,0.16);
+  --glow-1:rgba(233,29,42,0.12); --glow-2:rgba(233,29,42,0.09);
+  --stroke-ghost:rgba(0,0,0,0.07);
+  --font-display:'Inter Tight','Noto Sans KR',sans-serif;
+  --font-mono:'Space Mono','Noto Sans KR',monospace;
+  --grain-blend:multiply;
+}
+.theme-elevenlabs{
+  --bg:#f5f5f5; --bg-2:#fafafa; --fg:#0c0a09; --muted:#777169;
+  --accent:#292524; --accent-2:#0c0a09;
+  --line:#e7e5e4;
+  --glow-1:rgba(41,37,36,0.12); --glow-2:rgba(12,10,9,0.09);
+  --stroke-ghost:rgba(12,10,9,0.07);
+  --font-display:'Fraunces','Noto Serif KR',serif;
+  --font-mono:'Space Mono','Noto Serif KR',monospace;
+  --grain-blend:multiply;
+}
+.theme-expo{
+  --bg:#ffffff; --bg-2:#fafafa; --fg:#171717; --muted:#999999;
+  --accent:#000000; --accent-2:#1a1a1a;
+  --line:#f0f0f3;
+  --glow-1:rgba(0,0,0,0.12); --glow-2:rgba(26,26,26,0.09);
+  --stroke-ghost:rgba(23,23,23,0.07);
+  --font-display:'Inter Tight','Noto Sans KR',sans-serif;
+  --font-mono:'Space Mono','Noto Sans KR',monospace;
+  --grain-blend:multiply;
+}
+.theme-ferrari{
+  --bg:#181818; --bg-2:#181818; --fg:#ffffff; --muted:#666666;
+  --accent:#da291c; --accent-2:#9d2211;
+  --line:#303030;
+  --glow-1:rgba(218,41,28,0.2); --glow-2:rgba(157,34,17,0.13);
+  --stroke-ghost:rgba(218,41,28,0.16);
+  --font-display:'Inter Tight','Noto Sans KR',sans-serif;
+  --font-mono:'Space Mono','Noto Sans KR',monospace;
+  --grain-blend:screen;
+}
+.theme-figma{
+  --bg:#ffffff; --bg-2:#f7f7f5; --fg:#000000; --muted:#000000;
+  --accent:#000000; --accent-2:#000000;
+  --line:#e6e6e6;
+  --glow-1:rgba(0,0,0,0.12); --glow-2:rgba(0,0,0,0.09);
+  --stroke-ghost:rgba(0,0,0,0.07);
+  --font-display:'Inter Tight','Noto Sans KR',sans-serif;
+  --font-mono:'Space Mono','Noto Sans KR',monospace;
+  --grain-blend:multiply;
+}
+.theme-framer{
+  --bg:#090909; --bg-2:#141414; --fg:#ffffff; --muted:#999999;
+  --accent:#ffffff; --accent-2:#ffffff;
+  --line:#262626;
+  --glow-1:rgba(255,255,255,0.2); --glow-2:rgba(255,255,255,0.13);
+  --stroke-ghost:rgba(255,255,255,0.16);
+  --font-display:'Inter Tight','Noto Sans KR',sans-serif;
+  --font-mono:'Space Mono','Noto Sans KR',monospace;
+  --grain-blend:screen;
+}
+.theme-hashicorp{
+  --bg:#000000; --bg-2:#15181e; --fg:#ffffff; --muted:#656a76;
+  --accent:#000000; --accent-2:#000000;
+  --line:#3b3d45;
+  --glow-1:rgba(0,0,0,0.2); --glow-2:rgba(0,0,0,0.13);
+  --stroke-ghost:rgba(0,0,0,0.16);
+  --font-display:'Inter Tight','Noto Sans KR',sans-serif;
+  --font-mono:'Space Mono','Noto Sans KR',monospace;
+  --grain-blend:screen;
+}
+.theme-hp{
+  --bg:#ffffff; --bg-2:#ffffff; --fg:#1a1a1a; --muted:#c2c2c2;
+  --accent:#024ad8; --accent-2:#024ad8;
+  --line:#e8e8e8;
+  --glow-1:rgba(2,74,216,0.12); --glow-2:rgba(2,74,216,0.09);
+  --stroke-ghost:rgba(26,26,26,0.07);
+  --font-display:'Inter Tight','Noto Sans KR',sans-serif;
+  --font-mono:'Space Mono','Noto Sans KR',monospace;
+  --grain-blend:multiply;
+}
+.theme-ibm{
+  --bg:#ffffff; --bg-2:#f4f4f4; --fg:#161616; --muted:#8c8c8c;
+  --accent:#0f62fe; --accent-2:#0f62fe;
+  --line:#e0e0e0;
+  --glow-1:rgba(15,98,254,0.12); --glow-2:rgba(15,98,254,0.09);
+  --stroke-ghost:rgba(22,22,22,0.07);
+  --font-display:'Inter Tight','Noto Sans KR',sans-serif;
+  --font-mono:'Space Mono','Noto Sans KR',monospace;
+  --grain-blend:multiply;
+}
+.theme-intercom{
+  --bg:#f5f1ec; --bg-2:#ffffff; --fg:#111111; --muted:#7b7b78;
+  --accent:#111111; --accent-2:#111111;
+  --line:#d3cec6;
+  --glow-1:rgba(17,17,17,0.12); --glow-2:rgba(17,17,17,0.09);
+  --stroke-ghost:rgba(17,17,17,0.07);
+  --font-display:'Inter Tight','Noto Sans KR',sans-serif;
+  --font-mono:'Space Mono','Noto Sans KR',monospace;
+  --grain-blend:multiply;
+}
+.theme-meta{
+  --bg:#ffffff; --bg-2:#f1f4f7; --fg:#1c1e21; --muted:#5d6c7b;
+  --accent:#0064e0; --accent-2:#0064e0;
+  --line:#ced0d4;
+  --glow-1:rgba(0,100,224,0.12); --glow-2:rgba(0,100,224,0.09);
+  --stroke-ghost:rgba(28,30,33,0.07);
+  --font-display:'Inter Tight','Noto Sans KR',sans-serif;
+  --font-mono:'Space Mono','Noto Sans KR',monospace;
+  --grain-blend:multiply;
+}
+.theme-minimax{
+  --bg:#ffffff; --bg-2:#f2f3f5; --fg:#0a0a0a; --muted:#a8aab2;
+  --accent:#0a0a0a; --accent-2:#a855f7;
+  --line:#e5e7eb;
+  --glow-1:rgba(10,10,10,0.12); --glow-2:rgba(168,85,247,0.09);
+  --stroke-ghost:rgba(10,10,10,0.07);
+  --font-display:'Inter Tight','Noto Sans KR',sans-serif;
+  --font-mono:'Space Mono','Noto Sans KR',monospace;
+  --grain-blend:multiply;
+}
+.theme-mintlify{
+  --bg:#ffffff; --bg-2:#fafafa; --fg:#0a0a0a; --muted:#a8a8aa;
+  --accent:#0a0a0a; --accent-2:#0a0a0a;
+  --line:#e5e5e5;
+  --glow-1:rgba(10,10,10,0.12); --glow-2:rgba(10,10,10,0.09);
+  --stroke-ghost:rgba(10,10,10,0.07);
+  --font-display:'Inter Tight','Noto Sans KR',sans-serif;
+  --font-mono:'Space Mono','Noto Sans KR',monospace;
+  --grain-blend:multiply;
+}
+.theme-miro{
+  --bg:#ffffff; --bg-2:#fafbfc; --fg:#1c1c1e; --muted:#a5a8b5;
+  --accent:#1c1c1e; --accent-2:#1c1c1e;
+  --line:#e0e2e8;
+  --glow-1:rgba(28,28,30,0.12); --glow-2:rgba(28,28,30,0.09);
+  --stroke-ghost:rgba(28,28,30,0.07);
+  --font-display:'Inter Tight','Noto Sans KR',sans-serif;
+  --font-mono:'Space Mono','Noto Sans KR',monospace;
+  --grain-blend:multiply;
+}
+.theme-mistral{
+  --bg:#ffffff; --bg-2:#fafafa; --fg:#1f1f1f; --muted:#a8a8a8;
+  --accent:#fa520f; --accent-2:#fa520f;
+  --line:#e5e5e5;
+  --glow-1:rgba(250,82,15,0.12); --glow-2:rgba(250,82,15,0.09);
+  --stroke-ghost:rgba(31,31,31,0.07);
+  --font-display:'Fraunces','Noto Serif KR',serif;
+  --font-mono:'Space Mono','Noto Serif KR',monospace;
+  --grain-blend:multiply;
+}
+.theme-mongodb{
+  --bg:#ffffff; --bg-2:#f4f7f6; --fg:#001e2b; --muted:#a8b3bc;
+  --accent:#00ed64; --accent-2:#00ed64;
+  --line:#e1e5e8;
+  --glow-1:rgba(0,237,100,0.12); --glow-2:rgba(0,237,100,0.09);
+  --stroke-ghost:rgba(0,30,43,0.07);
+  --font-display:'Inter Tight','Noto Sans KR',sans-serif;
+  --font-mono:'Space Mono','Noto Sans KR',monospace;
+  --grain-blend:multiply;
+}
+.theme-nike{
+  --bg:#ffffff; --bg-2:#ffffff; --fg:#111111; --muted:#111111;
+  --accent:#111111; --accent-2:#0a7281;
+  --line:#cacacb;
+  --glow-1:rgba(17,17,17,0.12); --glow-2:rgba(10,114,129,0.09);
+  --stroke-ghost:rgba(17,17,17,0.07);
+  --font-display:'Inter Tight','Noto Sans KR',sans-serif;
+  --font-mono:'Space Mono','Noto Sans KR',monospace;
+  --grain-blend:multiply;
+}
+.theme-notion{
+  --bg:#ffffff; --bg-2:#fafaf9; --fg:#1a1a1a; --muted:#bbb8b1;
+  --accent:#5645d4; --accent-2:#0075de;
+  --line:#e5e3df;
+  --glow-1:rgba(86,69,212,0.12); --glow-2:rgba(0,117,222,0.09);
+  --stroke-ghost:rgba(26,26,26,0.07);
+  --font-display:'Inter Tight','Noto Sans KR',sans-serif;
+  --font-mono:'Space Mono','Noto Sans KR',monospace;
+  --grain-blend:multiply;
+}
+.theme-nvidia{
+  --bg:#ffffff; --bg-2:#f7f7f7; --fg:#000000; --muted:#000000;
+  --accent:#76b900; --accent-2:#0046a4;
+  --line:#cccccc;
+  --glow-1:rgba(118,185,0,0.12); --glow-2:rgba(0,70,164,0.09);
+  --stroke-ghost:rgba(0,0,0,0.07);
+  --font-display:'Inter Tight','Noto Sans KR',sans-serif;
+  --font-mono:'Space Mono','Noto Sans KR',monospace;
+  --grain-blend:multiply;
+}
+.theme-ollama{
+  --bg:#ffffff; --bg-2:#fafafa; --fg:#000000; --muted:#000000;
+  --accent:#000000; --accent-2:#000000;
+  --line:#e5e5e5;
+  --glow-1:rgba(0,0,0,0.12); --glow-2:rgba(0,0,0,0.09);
+  --stroke-ghost:rgba(0,0,0,0.07);
+  --font-display:'Inter Tight','Noto Sans KR',sans-serif;
+  --font-mono:'Space Mono','Noto Sans KR',monospace;
+  --grain-blend:multiply;
+}
+.theme-opencode{
+  --bg:#fdfcfc; --bg-2:#f8f7f7; --fg:#201d1d; --muted:#201d1d;
+  --accent:#201d1d; --accent-2:#201d1d;
+  --line:#646262;
+  --glow-1:rgba(32,29,29,0.12); --glow-2:rgba(32,29,29,0.09);
+  --stroke-ghost:rgba(32,29,29,0.07);
+  --font-display:'Inter Tight','Noto Sans KR',sans-serif;
+  --font-mono:'Space Mono','Noto Sans KR',monospace;
+  --grain-blend:multiply;
+}
+.theme-pinterest{
+  --bg:#ffffff; --bg-2:#fbfbf9; --fg:#000000; --muted:#000000;
+  --accent:#e60023; --accent-2:#e60023;
+  --line:#dadad3;
+  --glow-1:rgba(230,0,35,0.12); --glow-2:rgba(230,0,35,0.09);
+  --stroke-ghost:rgba(0,0,0,0.07);
+  --font-display:'Inter Tight','Noto Sans KR',sans-serif;
+  --font-mono:'Space Mono','Noto Sans KR',monospace;
+  --grain-blend:multiply;
+}
+.theme-posthog{
+  --bg:#eeefe9; --bg-2:#e5e7e0; --fg:#23251d; --muted:#23251d;
+  --accent:#f7a501; --accent-2:#1d4ed8;
+  --line:#bfc1b7;
+  --glow-1:rgba(247,165,1,0.12); --glow-2:rgba(29,78,216,0.09);
+  --stroke-ghost:rgba(35,37,29,0.07);
+  --font-display:'Inter Tight','Noto Sans KR',sans-serif;
+  --font-mono:'Space Mono','Noto Sans KR',monospace;
+  --grain-blend:multiply;
+}
+.theme-raycast{
+  --bg:#07080a; --bg-2:#0d0d0d; --fg:#f4f4f6; --muted:#f4f4f6;
+  --accent:#ffffff; --accent-2:#ffffff;
+  --line:#242728;
+  --glow-1:rgba(255,255,255,0.2); --glow-2:rgba(255,255,255,0.13);
+  --stroke-ghost:rgba(255,255,255,0.16);
+  --font-display:'Inter Tight','Noto Sans KR',sans-serif;
+  --font-mono:'Space Mono','Noto Sans KR',monospace;
+  --grain-blend:screen;
+}
+.theme-renault{
+  --bg:#ffffff; --bg-2:#f7f7f7; --fg:#000000; --muted:#000000;
+  --accent:#ffed00; --accent-2:#ffed00;
+  --line:#f2f2f2;
+  --glow-1:rgba(255,237,0,0.12); --glow-2:rgba(255,237,0,0.09);
+  --stroke-ghost:rgba(0,0,0,0.07);
+  --font-display:'Inter Tight','Noto Sans KR',sans-serif;
+  --font-mono:'Space Mono','Noto Sans KR',monospace;
+  --grain-blend:multiply;
+}
+.theme-replicate{
+  --bg:#f9f7f3; --bg-2:#f9f7f3; --fg:#202020; --muted:#202020;
+  --accent:#ea2804; --accent-2:#ea2804;
+  --line:#202020;
+  --glow-1:rgba(234,40,4,0.12); --glow-2:rgba(234,40,4,0.09);
+  --stroke-ghost:rgba(32,32,32,0.07);
+  --font-display:'Inter Tight','Noto Sans KR',sans-serif;
+  --font-mono:'Space Mono','Noto Sans KR',monospace;
+  --grain-blend:multiply;
+}
+.theme-resend{
+  --bg:#000000; --bg-2:#000000; --fg:#fcfdff; --muted:#fcfdff;
+  --accent:#fcfdff; --accent-2:#fcfdff;
+  --line:rgba(252,253,255,0.16);
+  --glow-1:rgba(252,253,255,0.2); --glow-2:rgba(252,253,255,0.13);
+  --stroke-ghost:rgba(252,253,255,0.16);
+  --font-display:'Inter Tight','Noto Sans KR',sans-serif;
+  --font-mono:'Space Mono','Noto Sans KR',monospace;
+  --grain-blend:screen;
+}
+.theme-slack{
+  --bg:#ffffff; --bg-2:#f4ede4; --fg:#1d1d1d; --muted:#1d1d1d;
+  --accent:#4a154b; --accent-2:#1264a3;
+  --line:#e6e6e6;
+  --glow-1:rgba(74,21,75,0.12); --glow-2:rgba(18,100,163,0.09);
+  --stroke-ghost:rgba(29,29,29,0.07);
+  --font-display:'Inter Tight','Noto Sans KR',sans-serif;
+  --font-mono:'Space Mono','Noto Sans KR',monospace;
+  --grain-blend:multiply;
+}
+.theme-stripe{
+  --bg:#ffffff; --bg-2:#f6f9fc; --fg:#0d253d; --muted:#273951;
+  --accent:#533afd; --accent-2:#533afd;
+  --line:#e3e8ee;
+  --glow-1:rgba(83,58,253,0.12); --glow-2:rgba(83,58,253,0.09);
+  --stroke-ghost:rgba(13,37,61,0.07);
+  --font-display:'Inter Tight','Noto Sans KR',sans-serif;
+  --font-mono:'Space Mono','Noto Sans KR',monospace;
+  --grain-blend:multiply;
+}
+.theme-supabase{
+  --bg:#ffffff; --bg-2:#fafafa; --fg:#171717; --muted:#212121;
+  --accent:#3ecf8e; --accent-2:#3ecf8e;
+  --line:#dfdfdf;
+  --glow-1:rgba(62,207,142,0.12); --glow-2:rgba(62,207,142,0.09);
+  --stroke-ghost:rgba(23,23,23,0.07);
+  --font-display:'Inter Tight','Noto Sans KR',sans-serif;
+  --font-mono:'Space Mono','Noto Sans KR',monospace;
+  --grain-blend:multiply;
+}
+.theme-superhuman{
+  --bg:#ffffff; --bg-2:#fafaf8; --fg:#292827; --muted:#292827;
+  --accent:#1b1938; --accent-2:#1b1938;
+  --line:#e8e4dd;
+  --glow-1:rgba(27,25,56,0.12); --glow-2:rgba(27,25,56,0.09);
+  --stroke-ghost:rgba(41,40,39,0.07);
+  --font-display:'Inter Tight','Noto Sans KR',sans-serif;
+  --font-mono:'Space Mono','Noto Sans KR',monospace;
+  --grain-blend:multiply;
+}
+.theme-together{
+  --bg:#ffffff; --bg-2:#ffffff; --fg:#000000; --muted:#000000;
+  --accent:#000000; --accent-2:#000000;
+  --line:#959494;
+  --glow-1:rgba(0,0,0,0.12); --glow-2:rgba(0,0,0,0.09);
+  --stroke-ghost:rgba(0,0,0,0.07);
+  --font-display:'Inter Tight','Noto Sans KR',sans-serif;
+  --font-mono:'Space Mono','Noto Sans KR',monospace;
+  --grain-blend:multiply;
+}
+.theme-uber{
+  --bg:#ffffff; --bg-2:#efefef; --fg:#000000; --muted:#000000;
+  --accent:#000000; --accent-2:#000000;
+  --line:rgba(0,0,0,0.16);
+  --glow-1:rgba(0,0,0,0.12); --glow-2:rgba(0,0,0,0.09);
+  --stroke-ghost:rgba(0,0,0,0.07);
+  --font-display:'Inter Tight','Noto Sans KR',sans-serif;
+  --font-mono:'Space Mono','Noto Sans KR',monospace;
+  --grain-blend:multiply;
+}
+.theme-vercel{
+  --bg:#ffffff; --bg-2:#fafafa; --fg:#171717; --muted:#171717;
+  --accent:#171717; --accent-2:#171717;
+  --line:#ebebeb;
+  --glow-1:rgba(23,23,23,0.12); --glow-2:rgba(23,23,23,0.09);
+  --stroke-ghost:rgba(23,23,23,0.07);
+  --font-display:'Inter Tight','Noto Sans KR',sans-serif;
+  --font-mono:'Space Mono','Noto Sans KR',monospace;
+  --grain-blend:multiply;
+}
+.theme-vodafone{
+  --bg:#ffffff; --bg-2:#f2f2f2; --fg:#25282b; --muted:#25282b;
+  --accent:#e60000; --accent-2:#e60000;
+  --line:rgba(37,40,43,0.16);
+  --glow-1:rgba(230,0,0,0.12); --glow-2:rgba(230,0,0,0.09);
+  --stroke-ghost:rgba(37,40,43,0.07);
+  --font-display:'Inter Tight','Noto Sans KR',sans-serif;
+  --font-mono:'Space Mono','Noto Sans KR',monospace;
+  --grain-blend:multiply;
+}
+.theme-voltagent{
+  --bg:#101010; --bg-2:#1a1a1a; --fg:#f2f2f2; --muted:#f2f2f2;
+  --accent:#00d992; --accent-2:#00d992;
+  --line:#3d3a39;
+  --glow-1:rgba(0,217,146,0.2); --glow-2:rgba(0,217,146,0.13);
+  --stroke-ghost:rgba(0,217,146,0.16);
+  --font-display:'Inter Tight','Noto Sans KR',sans-serif;
+  --font-mono:'Space Mono','Noto Sans KR',monospace;
+  --grain-blend:screen;
+}
+.theme-warp{
+  --bg:#2b2622; --bg-2:#383330; --fg:#f7f5f0; --muted:#f7f5f0;
+  --accent:#f7f5f0; --accent-2:#f7f5f0;
+  --line:#3f3a36;
+  --glow-1:rgba(247,245,240,0.2); --glow-2:rgba(247,245,240,0.13);
+  --stroke-ghost:rgba(247,245,240,0.16);
+  --font-display:'Inter Tight','Noto Sans KR',sans-serif;
+  --font-mono:'Space Mono','Noto Sans KR',monospace;
+  --grain-blend:screen;
+}
+.theme-webflow{
+  --bg:#ffffff; --bg-2:#ffffff; --fg:#080808; --muted:#080808;
+  --accent:#080808; --accent-2:#080808;
+  --line:#d8d8d8;
+  --glow-1:rgba(8,8,8,0.12); --glow-2:rgba(8,8,8,0.09);
+  --stroke-ghost:rgba(8,8,8,0.07);
+  --font-display:'Inter Tight','Noto Sans KR',sans-serif;
+  --font-mono:'Space Mono','Noto Sans KR',monospace;
+  --grain-blend:multiply;
+}
+.theme-wired{
+  --bg:#ffffff; --bg-2:#f5f5f5; --fg:#000000; --muted:#000000;
+  --accent:#000000; --accent-2:#000000;
+  --line:#e0e0e0;
+  --glow-1:rgba(0,0,0,0.12); --glow-2:rgba(0,0,0,0.09);
+  --stroke-ghost:rgba(0,0,0,0.07);
+  --font-display:'Inter Tight','Noto Sans KR',sans-serif;
+  --font-mono:'Space Mono','Noto Sans KR',monospace;
+  --grain-blend:multiply;
+}
+.theme-wise{
+  --bg:#ffffff; --bg-2:#e8ebe6; --fg:#0e0f0c; --muted:#0e0f0c;
+  --accent:#9fe870; --accent-2:#cdffad;
+  --line:rgba(14,15,12,0.16);
+  --glow-1:rgba(159,232,112,0.12); --glow-2:rgba(205,255,173,0.09);
+  --stroke-ghost:rgba(14,15,12,0.07);
+  --font-display:'Inter Tight','Noto Sans KR',sans-serif;
+  --font-mono:'Space Mono','Noto Sans KR',monospace;
+  --grain-blend:multiply;
+}
+.theme-x{
+  --bg:#0a0a0a; --bg-2:#1a1c20; --fg:#ffffff; --muted:#ffffff;
+  --accent:#ffffff; --accent-2:#ffffff;
+  --line:#212327;
+  --glow-1:rgba(255,255,255,0.2); --glow-2:rgba(255,255,255,0.13);
+  --stroke-ghost:rgba(255,255,255,0.16);
+  --font-display:'Inter Tight','Noto Sans KR',sans-serif;
+  --font-mono:'Space Mono','Noto Sans KR',monospace;
+  --grain-blend:screen;
+}
+.theme-zapier{
+  --bg:#fffefb; --bg-2:#f8f4f0; --fg:#201515; --muted:#201515;
+  --accent:#ff4f00; --accent-2:#ff4f00;
+  --line:rgba(32,21,21,0.16);
+  --glow-1:rgba(255,79,0,0.12); --glow-2:rgba(255,79,0,0.09);
+  --stroke-ghost:rgba(32,21,21,0.07);
+  --font-display:'Inter Tight','Noto Sans KR',sans-serif;
+  --font-mono:'Space Mono','Noto Sans KR',monospace;
+  --grain-blend:multiply;
+}
+/* THEME-BLOCKS:END */
+
+/* ============================================================================
+   DECK LAYOUT  —  전부 var() 로만 색/폰트 참조 (리스킨 가능)
+   ========================================================================== */
+.title-slide { background: var(--bg); overflow: hidden; }
+
+/* 배경 레이어 */
+.title-slide .bg-glow {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(60% 55% at 18% 12%, var(--glow-1), transparent 60%),
+    radial-gradient(50% 50% at 88% 92%, var(--glow-2), transparent 60%),
+    linear-gradient(160deg, var(--bg-2), var(--bg) 55%);
+}
+.title-slide .bg-grid {
+  position: absolute; inset: 0;
+  background-image: repeating-linear-gradient(
+    to right, transparent 0 239px, var(--line) 239px 240px);
+  opacity: .5;
+  mask-image: linear-gradient(to bottom, transparent, #000 20%, #000 80%, transparent);
+}
+.title-slide .bg-grain {
+  position: absolute; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+  opacity: .045;
+  mix-blend-mode: var(--grain-blend);
+}
+
+/* 거대한 고스트 인덱스 넘버 */
+.ghost-index {
+  position: absolute;
+  right: 60px; bottom: -120px;
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: 640px;
+  line-height: 1;
+  color: transparent;
+  -webkit-text-stroke: 2px var(--stroke-ghost);
+  letter-spacing: -.02em;
+  user-select: none;
+}
+
+/* 콘텐츠 레이아웃 */
+.title-inner {
+  position: absolute;
+  inset: 0;
+  padding: 110px 140px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.top-row { display: flex; align-items: flex-start; justify-content: space-between; }
+.kicker {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  letter-spacing: .34em;
+  text-transform: uppercase;
+  color: var(--accent);
+  display: flex; align-items: center; gap: 22px;
+}
+.kicker::before {
+  content: ""; width: 64px; height: 2px;
+  background: var(--accent); display: inline-block;
+}
+.runhead {
+  font-family: var(--font-mono);
+  font-size: 18px; letter-spacing: .12em;
+  color: var(--muted); text-align: right; line-height: 1.6;
+}
+.headline {
+  font-family: var(--font-display);
+  font-weight: 380;
+  font-size: 158px; line-height: 1.02; letter-spacing: -.02em;
+  color: var(--fg); max-width: 1400px; margin: 0;
+}
+.headline em { font-style: italic; font-weight: 420; color: var(--accent); }
+.subhead {
+  margin-top: 44px;
+  font-family: var(--font-display);
+  font-weight: 300; font-size: 34px; line-height: 1.5;
+  color: var(--muted); max-width: 980px;
+}
+.meta-row {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  border-top: 1px solid var(--line); padding-top: 28px;
+}
+.meta-left {
+  font-family: var(--font-mono);
+  font-size: 20px; letter-spacing: .08em; color: var(--muted);
+  display: flex; gap: 40px;
+}
+.meta-left b { color: var(--fg); font-weight: 700; }
+.page-num {
+  font-family: var(--font-display);
+  font-size: 30px; color: var(--accent); letter-spacing: .04em;
+}
+
+/* off-stage 힌트 (좌하단 — 스위처와 겹치지 않게) */
+.corner-tag {
+  left: 26px; bottom: 22px;
+  color: var(--muted);
+  font-family: 'Space Mono', monospace;
+  letter-spacing: .18em;
+  opacity: .55;
+}
+
+/* ============================================================================
+   THEME SWITCHER  —  우하단 드롭인 <select> (off-stage chrome)
+   ========================================================================== */
+.theme-switch{ position:fixed; right:24px; bottom:22px; z-index:9999;
+  display:flex; align-items:center; gap:10px; }
+.theme-switch .lbl{
+  position:absolute; left:2px; top:-22px;
+  font:700 11px/1 'Space Mono', monospace; letter-spacing:.22em;
+  color:var(--muted); text-transform:uppercase;
+}
+/* 즐겨찾기 별 버튼 — 현재 테마 상태 표시 + 클릭 토글 */
+.fav-btn{
+  appearance:none; -webkit-appearance:none; cursor:pointer;
+  width:44px; height:44px; flex:0 0 auto;
+  border-radius:9999px; border:1px solid var(--line);
+  background:var(--bg-2); color:var(--muted);
+  font-size:19px; line-height:1;
+  box-shadow:0 8px 26px rgba(0,0,0,.28);
+  transition:transform .18s ease, color .25s ease, background .25s ease, border-color .25s ease;
+}
+.fav-btn:hover{ color:var(--accent); }
+.fav-btn:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+.fav-btn.is-fav{ color:var(--accent); border-color:var(--accent); }
+.fav-btn:active{ transform:scale(.9); }
+.fav-btn.pop{ animation:favpop .38s ease; }
+@keyframes favpop{ 0%{transform:scale(1)} 40%{transform:scale(1.4)} 100%{transform:scale(1)} }
+
+/* 드롭다운 */
+.select-wrap{ position:relative; display:inline-flex; }
+.select-wrap::after{
+  content:"▾"; position:absolute; right:16px; top:50%; transform:translateY(-50%);
+  pointer-events:none; font-size:13px; color:var(--fg);
+}
+.theme-switch select{
+  appearance:none; -webkit-appearance:none;
+  font:700 14px/1 'Space Mono', monospace;
+  letter-spacing:.06em;
+  padding:12px 42px 12px 18px;
+  border-radius:9999px; cursor:pointer;
+  color:var(--fg);
+  background:var(--bg-2);
+  border:1px solid var(--line);
+  box-shadow:0 8px 26px rgba(0,0,0,.28);
+  transition:background .35s ease, color .35s ease, border-color .35s ease;
+}
+.theme-switch select:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+@media (prefers-reduced-motion: reduce){ .theme-switch select{ transition:none; } .fav-btn{ transition:none; } .fav-btn.pop{ animation:none; } }
+
+/* 테마 전환 토스트 (하단 중앙, off-stage) */
+.theme-toast{
+  left:50%; bottom:26px; transform:translateX(-50%) translateY(8px);
+  padding:11px 22px; border-radius:9999px;
+  background:var(--bg-2); color:var(--fg); border:1px solid var(--line);
+  font:700 14px/1 'Space Mono', monospace; letter-spacing:.08em;
+  box-shadow:0 8px 26px rgba(0,0,0,.28);
+  opacity:0; pointer-events:none;
+  transition:opacity .25s ease, transform .25s ease;
+}
+.theme-toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+/* 즐겨찾기 액션 토스트 — 액센트 강조 + 팝 */
+.theme-toast.fav{ border-color:var(--accent); color:var(--accent); }
+.theme-toast.fav.show{ animation:toastpop .4s ease; }
+/* opacity 는 .show 가 담당(transition). 여기선 scale 팝만 — opacity 키프레임 금지 */
+@keyframes toastpop{
+  0%{ transform:translateX(-50%) scale(.9); }
+  55%{ transform:translateX(-50%) scale(1.06); }
+  100%{ transform:translateX(-50%) scale(1); }
+}
+@media (prefers-reduced-motion: reduce){ .theme-toast{ transition:none; } .theme-toast.fav.show{ animation:none; } }
+
+/* 테마 전환 시 스테이지 색도 부드럽게 */
+.deck-root, .title-slide, .bg-glow { transition: background .4s ease; }
+
+/* ============================================================================
+   HELP OVERLAY  —  H / ? 로 토글하는 단축키 안내 (off-stage, theme-aware)
+   ========================================================================== */
+.help-overlay{
+  position:fixed; inset:0; z-index:10000;
+  display:none; align-items:center; justify-content:center;
+  background:rgba(0,0,0,.55); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);
+}
+.help-overlay.open{ display:flex; animation:helpfade .2s ease; }
+@keyframes helpfade{ from{opacity:0} to{opacity:1} }
+.help-card{
+  width:min(560px, 86vw);
+  background:var(--bg-2); color:var(--fg);
+  border:1px solid var(--line); border-radius:20px;
+  padding:32px 36px; box-shadow:0 30px 80px rgba(0,0,0,.5);
+}
+.help-card h2{
+  margin:0 0 20px;
+  font:700 15px/1 'Space Mono', monospace; letter-spacing:.24em; text-transform:uppercase;
+  color:var(--accent);
+}
+.help-row{ display:flex; align-items:center; gap:16px; padding:9px 0; border-bottom:1px solid var(--line); }
+.help-row:last-of-type{ border-bottom:0; }
+.help-row .keys{ flex:0 0 132px; display:flex; gap:6px; flex-wrap:wrap; }
+.help-row kbd{
+  font:700 12px/1 'Space Mono', monospace; padding:6px 9px; border-radius:7px;
+  background:var(--bg); border:1px solid var(--line); color:var(--fg); white-space:nowrap;
+}
+.help-row .desc{ font:400 14px/1.3 'Space Mono', monospace; color:var(--muted); letter-spacing:.02em; }
+.help-hint{ margin-top:18px; font:400 12px/1 'Space Mono', monospace; color:var(--muted); text-align:center; letter-spacing:.06em; }
+@media (prefers-reduced-motion: reduce){ .help-overlay.open{ animation:none; } }
+</style>
+</head>
+<body>
+
+<!-- ========================================================================
+     DECK ROOT — theme-* 클래스가 여기 붙고, 스위처가 이걸 교체
+     ===================================================================== -->
+<div class="deck-root theme-linear" data-deck="frontend-slides-demo">
+
+  <!-- === THEME SWITCHER (off-stage, 우하단) === -->
+  <div class="theme-switch deck-ui" role="group" aria-label="테마 선택">
+    <span class="lbl">getdesign.md</span>
+    <button class="fav-btn" id="fav-btn" type="button" title="즐겨찾기 (F)" aria-pressed="false" aria-label="현재 테마 즐겨찾기">☆</button>
+    <span class="select-wrap">
+    <select id="theme-select" aria-label="테마">
+      <!-- THEME-OPTIONS:START -->
+      <option selected value="theme-linear">Linear</option>
+      <option value="theme-airbnb">Airbnb</option>
+      <option value="theme-airtable">Airtable</option>
+      <option value="theme-apple">Apple</option>
+      <option value="theme-bmw">Bmw</option>
+      <option value="theme-bmw-m">Bmw M</option>
+      <option value="theme-bugatti">Bugatti</option>
+      <option value="theme-cal">Cal</option>
+      <option value="theme-claude">Claude</option>
+      <option value="theme-clay">Clay</option>
+      <option value="theme-clickhouse">Clickhouse</option>
+      <option value="theme-cohere">Cohere</option>
+      <option value="theme-coinbase">Coinbase</option>
+      <option value="theme-composio">Composio</option>
+      <option value="theme-cursor">Cursor</option>
+      <option value="theme-dell-1996">Dell 1996</option>
+      <option value="theme-elevenlabs">Elevenlabs</option>
+      <option value="theme-expo">Expo</option>
+      <option value="theme-ferrari">Ferrari</option>
+      <option value="theme-figma">Figma</option>
+      <option value="theme-framer">Framer</option>
+      <option value="theme-hashicorp">Hashicorp</option>
+      <option value="theme-hp">HP</option>
+      <option value="theme-ibm">Ibm</option>
+      <option value="theme-intercom">Intercom</option>
+      <option value="theme-meta">Meta</option>
+      <option value="theme-minimax">Minimax</option>
+      <option value="theme-mintlify">Mintlify</option>
+      <option value="theme-miro">Miro</option>
+      <option value="theme-mistral">Mistral</option>
+      <option value="theme-mongodb">Mongodb</option>
+      <option value="theme-nike">Nike</option>
+      <option value="theme-notion">Notion</option>
+      <option value="theme-nvidia">Nvidia</option>
+      <option value="theme-ollama">Ollama</option>
+      <option value="theme-opencode">Opencode</option>
+      <option value="theme-pinterest">Pinterest</option>
+      <option value="theme-posthog">Posthog</option>
+      <option value="theme-raycast">Raycast</option>
+      <option value="theme-renault">Renault</option>
+      <option value="theme-replicate">Replicate</option>
+      <option value="theme-resend">Resend</option>
+      <option value="theme-slack">Slack</option>
+      <option value="theme-stripe">Stripe</option>
+      <option value="theme-supabase">Supabase</option>
+      <option value="theme-superhuman">Superhuman</option>
+      <option value="theme-together">Together</option>
+      <option value="theme-uber">Uber</option>
+      <option value="theme-vercel">Vercel</option>
+      <option value="theme-vodafone">Vodafone</option>
+      <option value="theme-voltagent">Voltagent</option>
+      <option value="theme-warp">Warp</option>
+      <option value="theme-webflow">Webflow</option>
+      <option value="theme-wired">Wired</option>
+      <option value="theme-wise">Wise</option>
+      <option value="theme-x">X</option>
+      <option value="theme-zapier">Zapier</option>
+<!-- THEME-OPTIONS:END -->
+    </select>
+    </span>
+  </div>
+
+  <!-- VIEWPORT WRAPPER -->
+  <div class="deck-viewport">
+    <!-- 고정 1920×1080 스테이지 -->
+    <div class="deck-stage">
+
+      <!-- === SLIDE 01 · TITLE ========================================== -->
+      <section class="slide title-slide active">
+        <div class="bg-glow"></div>
+        <div class="bg-grid"></div>
+        <div class="bg-grain"></div>
+        <div class="ghost-index reveal" style="--i:6">01</div>
+
+        <div class="slide-content title-inner">
+          <div class="top-row">
+            <div class="kicker reveal" style="--i:0">ZOONA · SLIDES</div>
+            <div class="runhead reveal" style="--i:1">FIXED 16:9 STAGE<br/>1920 × 1080</div>
+          </div>
+
+          <div>
+            <h1 class="headline">
+              <span class="reveal" style="--i:2">브라우저에서</span><br/>
+              <span class="reveal" style="--i:3">완성되는 <em>발표자료</em></span>
+            </h1>
+            <p class="subhead reveal" style="--i:4">
+              제로 디펜던시 · 단일 HTML · 스태거 애니메이션.<br/>
+              어느 화면에서도 16:9를 유지하는 스케일 스테이지.
+            </p>
+          </div>
+
+          <div class="meta-row reveal" style="--i:5">
+            <div class="meta-left">
+              <span>AUTHOR&nbsp;&nbsp;<b>hozoon</b></span>
+              <span>2026</span>
+              <span>THEME&nbsp;&nbsp;<b id="cur-theme">Linear</b></span>
+            </div>
+            <div class="page-num">01 — 01</div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- off-stage 힌트 (좌하단) -->
+  <div class="deck-ui corner-tag">← →  슬라이드 · ⌥← →  테마 · F  즐겨찾기 · H / ?  도움말</div>
+
+  <!-- 테마 전환 토스트 (하단 중앙) -->
+  <div class="deck-ui theme-toast" id="theme-toast"></div>
+
+  <!-- 단축키 도움말 오버레이 (H / ?) -->
+  <div class="help-overlay" id="help-overlay" role="dialog" aria-modal="true" aria-label="단축키 도움말">
+    <div class="help-card">
+      <h2>단축키</h2>
+      <div class="help-row"><span class="keys"><kbd>←</kbd><kbd>→</kbd><kbd>Space</kbd></span><span class="desc">슬라이드 이동</span></div>
+      <div class="help-row"><span class="keys"><kbd>⌥←</kbd><kbd>⌥→</kbd></span><span class="desc">테마 전환</span></div>
+      <div class="help-row"><span class="keys"><kbd>T</kbd><kbd>⇧T</kbd></span><span class="desc">테마 전환 (백업)</span></div>
+      <div class="help-row"><span class="keys"><kbd>F</kbd></span><span class="desc">현재 테마 즐겨찾기 토글</span></div>
+      <div class="help-row"><span class="keys"><kbd>⇧F</kbd></span><span class="desc">즐겨찾기한 테마만 순환</span></div>
+      <div class="help-row"><span class="keys"><kbd>H</kbd><kbd>?</kbd></span><span class="desc">이 도움말 열기 / 닫기</span></div>
+      <div class="help-hint">H · ? · Esc · 바깥 클릭으로 닫기</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ========================================================================
+     DECK BOOTSTRAP SCRIPT (필수) — 균일 스케일 + 방향키/스페이스/스와이프
+     ===================================================================== -->
+<script>
+(function () {
+  var stage  = document.querySelector('.deck-stage');
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  if (!stage || !slides.length) return;
+
+  var i = slides.findIndex(function (s) { return s.classList.contains('active'); });
+  if (i < 0) i = 0;
+
+  function fit() {
+    var s = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+    document.documentElement.style.setProperty('--deck-scale', s);
+  }
+  function show(n) {
+    i = (n + slides.length) % slides.length;
+    slides.forEach(function (s, k) { s.classList.toggle('active', k === i); });
+    document.documentElement.style.setProperty('--slide', i);
+  }
+
+  window.addEventListener('resize', fit);
+  fit();
+  show(i);
+
+  window.addEventListener('keydown', function (e) {
+    if (e.altKey || e.metaKey || e.ctrlKey) return; // 수식키 조합은 테마 단축키에 양보
+    if (['ArrowRight', 'ArrowDown', ' ', 'PageDown'].indexOf(e.key) > -1) { e.preventDefault(); show(i + 1); }
+    else if (['ArrowLeft', 'ArrowUp', 'PageUp'].indexOf(e.key) > -1)      { e.preventDefault(); show(i - 1); }
+    else if (e.key === 'Home') { show(0); }
+    else if (e.key === 'End')  { show(slides.length - 1); }
+  });
+
+  var x0 = null;
+  window.addEventListener('touchstart', function (e) { x0 = e.touches[0].clientX; }, { passive: true });
+  window.addEventListener('touchend', function (e) {
+    if (x0 == null) return;
+    var dx = e.changedTouches[0].clientX - x0;
+    if (Math.abs(dx) > 40) show(i + (dx < 0 ? 1 : -1));
+    x0 = null;
+  }, { passive: true });
+})();
+</script>
+
+<!-- ========================================================================
+     THEME SWITCHER SCRIPT — 적용 + localStorage 저장 + 복원
+     ===================================================================== -->
+<script>
+(function () {
+  var root   = document.querySelector('.deck-root');
+  var sel    = document.getElementById('theme-select');
+  var label  = document.getElementById('cur-theme');
+  var toast  = document.getElementById('theme-toast');
+  var favBtn = document.getElementById('fav-btn');
+  if (!root || !sel) return;
+  var classes = Array.prototype.map.call(sel.options, function (o) { return o.value; });
+  var opts    = Array.prototype.slice.call(sel.options);
+
+  // 옵션의 원래 이름을 보존 (별표를 앞에 붙였다 뗐다 하기 위해)
+  opts.forEach(function (o) { o.dataset.base = o.textContent; });
+
+  function byValue(v) { return sel.querySelector('option[value="' + v + '"]'); }
+  function get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+
+  // ── localStorage 키 ────────────────────────────────────────────────
+  // 즐겨찾기 = 전역(모든 덱 공유) / 현재 테마 = 덱별(각 덱이 자기 상태 기억)
+  var deckId    = root.dataset.deck || document.title || location.pathname;
+  var FAVS_KEY  = 'zoona-favs';           // 전역
+  var FAVO_KEY  = 'zoona-fav-only';       // 전역
+  var THEME_KEY = 'zoona-theme:' + deckId; // 덱별
+
+  // 구버전 키(deck-*) 1회 마이그레이션
+  if (get(FAVS_KEY) == null && get('deck-favs') != null) set(FAVS_KEY, get('deck-favs'));
+  if (get(FAVO_KEY) == null && get('deck-fav-only') != null) set(FAVO_KEY, get('deck-fav-only'));
+
+  // ── 즐겨찾기 상태 ──────────────────────────────────────────────────
+  var favs = {};
+  try { (JSON.parse(get(FAVS_KEY) || '[]') || []).forEach(function (v) { favs[v] = true; }); } catch (e) {}
+  var favOnly = get(FAVO_KEY) === '1';
+
+  function saveFavs() {
+    set(FAVS_KEY, JSON.stringify(Object.keys(favs).filter(function (k) { return favs[k]; })));
+  }
+  function favList() { return opts.filter(function (o) { return favs[o.value]; }); }
+  function renderStar(o) { if (o) o.textContent = (favs[o.value] ? '★ ' : '') + o.dataset.base; }
+  function renderAllStars() { opts.forEach(renderStar); }
+
+  // 별 버튼: 현재 테마 즐겨찾기 상태 반영 (+ pop 애니메이션)
+  function updateFavBtn(pop) {
+    if (!favBtn) return;
+    var on = !!favs[sel.value];
+    favBtn.classList.toggle('is-fav', on);
+    favBtn.textContent = on ? '★' : '☆';
+    favBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    if (pop) { favBtn.classList.remove('pop'); void favBtn.offsetWidth; favBtn.classList.add('pop'); }
+  }
+
+  // ── 토스트 (fav=true 면 액센트 강조 + 팝) ──────────────────────────
+  var toastTimer;
+  function showToast(msg, fav) {
+    if (!toast) return;
+    toast.textContent = msg;
+    toast.classList.toggle('fav', !!fav);
+    toast.classList.remove('show'); void toast.offsetWidth; toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toast.classList.remove('show'); }, 1300);
+  }
+
+  // ── 테마 적용 ──────────────────────────────────────────────────────
+  function apply(v, announce) {
+    classes.forEach(function (c) { root.classList.remove(c); });
+    root.classList.add(v);
+    var opt = byValue(v);
+    if (label) label.textContent = opt ? opt.textContent : v;
+    updateFavBtn(false);
+    if (announce) showToast('테마 · ' + (opt ? opt.textContent : v), false);
+    set(THEME_KEY, v);
+  }
+
+  // ⌥→ 다음 / ⌥← 이전 — 즐겨찾기 모드면 별표 테마만 순환
+  function cycle(dir) {
+    var list = (favOnly && favList().length) ? favList() : opts;
+    var cur = sel.value, idx = -1;
+    for (var k = 0; k < list.length; k++) { if (list[k].value === cur) { idx = k; break; } }
+    if (idx < 0) idx = dir > 0 ? -1 : 0;           // 현재가 목록 밖이면 끝에서 진입
+    var next = list[(idx + dir + list.length) % list.length];
+    sel.value = next.value;
+    apply(sel.value, true);
+  }
+
+  // F / 별버튼 클릭 = 현재 테마 즐겨찾기 토글
+  function toggleFav(v) {
+    if (favs[v]) { delete favs[v]; } else { favs[v] = true; }
+    saveFavs();
+    var o = byValue(v);
+    renderStar(o);
+    if (label) label.textContent = o.textContent;
+    updateFavBtn(true);
+    showToast((favs[v] ? '★ 즐겨찾기 추가 · ' : '☆ 즐겨찾기 해제 · ') + o.dataset.base, true);
+  }
+
+  // Shift+F = "즐겨찾기만 순환" 모드 토글
+  function toggleFavOnly() {
+    favOnly = !favOnly;
+    set(FAVO_KEY, favOnly ? '1' : '0');
+    var c = favList().length;
+    if (favOnly && !c) showToast('순환: 즐겨찾기만 — 아직 별표 없음 (F로 추가)', false);
+    else showToast(favOnly ? ('순환: 즐겨찾기만 (' + c + '개)') : '순환: 전체 테마', false);
+  }
+
+  // ── 초기화 ─────────────────────────────────────────────────────────
+  renderAllStars();
+  var saved = get(THEME_KEY);
+  if (saved == null && get('deck-theme') != null) saved = get('deck-theme'); // 구버전 폴백
+  if (saved && classes.indexOf(saved) > -1) sel.value = saved;
+  apply(sel.value, false);
+
+  sel.addEventListener('change', function () { apply(sel.value, true); });
+  if (favBtn) favBtn.addEventListener('click', function () { toggleFav(sel.value); });
+
+  // ── 도움말 오버레이 (H / ?) ────────────────────────────────────────
+  var help = document.getElementById('help-overlay');
+  function toggleHelp(force) {
+    if (!help) return;
+    help.classList.toggle('open', force == null ? !help.classList.contains('open') : force);
+  }
+  if (help) help.addEventListener('click', function (e) { if (e.target === help) toggleHelp(false); });
+
+  window.addEventListener('keydown', function (e) {
+    // 입력 요소(셀렉트 등)에 포커스가 있을 땐 단축키 무시
+    if (e.target && /^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)) return;
+
+    // ⌥→ 다음 테마, ⌥← 이전 테마 — Command 제외(탭 전환 충돌 회피)
+    if (e.altKey && !e.metaKey && !e.ctrlKey) {
+      if (e.key === 'ArrowRight')     { e.preventDefault(); cycle(1); }
+      else if (e.key === 'ArrowLeft') { e.preventDefault(); cycle(-1); }
+      return;
+    }
+
+    // 수식키(⌘/⌃/⌥) 조합은 여기서 종료 (Shift는 허용)
+    if (e.altKey || e.ctrlKey || e.metaKey) return;
+    if (e.key === 't')      { e.preventDefault(); cycle(1); }        // 백업: 다음
+    else if (e.key === 'T') { e.preventDefault(); cycle(-1); }       // 백업: 이전
+    else if (e.key === 'f') { e.preventDefault(); toggleFav(sel.value); }  // 즐겨찾기 토글
+    else if (e.key === 'F') { e.preventDefault(); toggleFavOnly(); }       // 즐겨찾기만 순환
+    else if (e.key === 'h' || e.key === 'H' || e.key === '?') { e.preventDefault(); toggleHelp(); } // 도움말
+    else if (e.key === 'Escape') { toggleHelp(false); }
+  });
+})();
+</script>
+</body>
+</html>
