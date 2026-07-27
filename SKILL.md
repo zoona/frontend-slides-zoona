@@ -1,380 +1,215 @@
 ---
 name: frontend-slides
-description: Create stunning, animation-rich HTML presentations from scratch or by converting PowerPoint files. Use when the user wants to build a presentation, convert a PPT/PPTX to web, or create slides for a talk/pitch. Helps non-designers discover their aesthetic through visual exploration rather than abstract choices.
+description: HTML 발표자료를 처음부터 만드는 스킬 — 고정 16:9 스테이지, 디자인시스템 테마(라이브 스위처 + 즐겨찾기 + 단축키), 배치 편집(Refinement Mode). Invoke for "/frontend-slides", "deck 만들어", "발표자료", "슬라이드", "수정 모드", "refine", 또는 사용자가 제로 디펜던시 HTML 프레젠테이션을 만들거나 다듬고 싶을 때.
 ---
 
-# Frontend Slides
+# frontend-slides
 
-Create zero-dependency, animation-rich HTML presentations that run entirely in the browser.
+제로 디펜던시로 애니메이션이 풍부한 **단일 HTML 발표자료**를 만드는 스킬. 브라우저에서 그대로 열리며 빌드 도구가 필요 없다. 세 축으로 구성된다:
+
+1. **고정 16:9 스테이지 엔진** — `viewport-base.css` (스케일 스테이지 + 부트스트랩 스크립트)
+2. **디자인시스템 테마** — 브랜드 토큰 라이브러리(74종 번들)를 파싱해 라이브 테마 스위처로 (단축키·즐겨찾기·도움말 포함)
+3. **Refinement Mode** — 배치 편집 프로토콜 (요청 1회 = 변경 리스트 전체 처리)
+
+> 번들 디자인시스템 데이터의 출처는 [CREDITS](CREDITS) 참고.
 
 ## Core Principles
 
-1. **Zero Dependencies** — Single HTML files with inline CSS/JS. No npm, no build tools.
-2. **Show, Don't Tell** — Generate visual previews, not abstract choices. People discover what they want by seeing it.
-3. **Distinctive Design** — No generic "AI slop." Every presentation must feel custom-crafted.
-4. **Progressive Disclosure** — Read lightweight style indexes first. For bold templates, use small preview cards for style previews and load the full `design.md` only after the user picks that template.
-5. **Fixed 16:9 Stage (NON-NEGOTIABLE)** — Every deck uses a 1920×1080 slide canvas scaled as a whole to the viewport. Slides must stay 16:9 on every screen, including phones. Do not reflow slide content to fit the device.
+1. **Zero Dependencies** — 인라인 CSS/JS 단일 HTML. npm/빌드 없음.
+2. **Show, Don't Tell** — 추상적 선택지 대신 **시각 프리뷰**를 생성해 사용자가 보고 고르게.
+3. **Distinctive Design** — 제너릭한 "AI slop" 금지. 매 덱이 맞춤 제작된 느낌.
+4. **Fixed 16:9 Stage (NON-NEGOTIABLE)** — 모든 덱은 1920×1080 캔버스를 통째로 뷰포트에 스케일. 폰에서도 16:9 유지, 기기에 맞춰 리플로우하지 않는다.
 
 ## Design Aesthetics
 
-You tend to converge toward generic, "on distribution" outputs. In frontend design, this creates what users call the "AI slop" aesthetic. Avoid this: make creative, distinctive frontends that surprise and delight.
+기본값은 "on-distribution"한 제너릭 출력으로 수렴하기 쉽다 — 이른바 "AI slop". 이를 피하고 놀랍고 즐거운, 맥락에 맞춘 디자인을 만든다.
 
-Focus on:
+- **Typography**: Arial/Inter 같은 제너릭 폰트 회피. 개성 있는 서체 선택. (Space Grotesk로도 잘 수렴하니 주의 — 다양하게.)
+- **Color & Theme**: 하나의 응집된 미학에 커밋. CSS 변수로 일관성. 지배색 + 날카로운 액센트가 밋밋한 균등 팔레트를 이긴다. IDE 테마·문화적 미감에서 영감.
+- **Motion**: CSS 위주. 로드 시 staggered reveal 한 방(animation-delay)이 산발적 마이크로 인터랙션보다 강렬하다.
+- **Backgrounds**: 단색 대신 그라디언트·기하 패턴·분위기 레이어로 깊이.
 
-- Typography: Choose fonts that are beautiful, unique, and interesting. Avoid generic fonts like Arial and Inter; opt instead for distinctive choices that elevate the frontend's aesthetics.
-- Color & Theme: Commit to a cohesive aesthetic. Use CSS variables for consistency. Dominant colors with sharp accents outperform timid, evenly-distributed palettes. Draw from IDE themes and cultural aesthetics for inspiration.
-- Motion: Use animations for effects and micro-interactions. Prioritize CSS-only solutions for HTML. Use Motion library for React when available. Focus on high-impact moments: one well-orchestrated page load with staggered reveals (animation-delay) creates more delight than scattered micro-interactions.
-- Backgrounds: Create atmosphere and depth rather than defaulting to solid colors. Layer CSS gradients, use geometric patterns, or add contextual effects that match the overall aesthetic.
-
-Avoid generic AI-generated aesthetics:
-
-- Overused font families (Inter, Roboto, Arial, system fonts)
-- Cliched color schemes (particularly purple gradients on white backgrounds)
-- Predictable layouts and component patterns
-- Cookie-cutter design that lacks context-specific character
-
-Interpret creatively and make unexpected choices that feel genuinely designed for the context. Vary between light and dark themes, different fonts, different aesthetics. You still tend to converge on common choices (Space Grotesk, for example) across generations. Avoid this: it is critical that you think outside the box!
+회피: 남용 폰트(Inter/Roboto/Arial), 클리셰 팔레트(흰 배경 보라 그라디언트), 예측 가능한 레이아웃, 쿠키커터 카드/대시보드.
 
 ## Fixed Stage Rules
 
-These invariants apply to EVERY slide in EVERY presentation:
+모든 슬라이드에 적용되는 불변 규칙:
 
-- Every deck has a viewport wrapper that fills the browser window.
-- Every slide is authored inside a fixed 1920×1080 stage.
-- The stage scales uniformly to fit the viewport. It may letterbox/pillarbox; it must not re-layout content.
-- Do not use responsive breakpoints to rearrange slide content for phones.
-- Use fixed internal slide measurements at the 1920×1080 design size.
-- Slide visibility must be controlled by `.active` / `.visible` using `visibility`, `opacity`, and `pointer-events` from `viewport-base.css`. Do not use `display: none` / `display: block` for slide switching; later layout classes such as `.slide-content { display: flex; }` can override them and make every slide visible at once.
-- Use `clamp()` only for non-slide UI outside the stage, or for small fallback previews where a full stage is impractical.
-- Include `prefers-reduced-motion` support
-- Never negate CSS functions directly (`-clamp()`, `-min()`, `-max()` are silently ignored) — use `calc(-1 * clamp(...))` instead
+- 뷰포트 래퍼가 창을 채우고, 1920×1080 스테이지를 균일 스케일(레터박스/필러박스 허용, 리플로우 금지).
+- 폰용 반응형 브레이크포인트로 슬라이드를 재배치하지 않는다.
+- 슬라이드 전환은 `.active`/`.visible` + `visibility`/`opacity`/`pointer-events`로만. `display:none/block` 금지 (후속 `.slide-content{display:flex}`가 덮어써 모든 슬라이드가 동시에 보이는 버그 유발).
+- 스테이지 내부는 1920×1080 기준 고정 px. `clamp()`는 스테이지 밖 UI에서만.
+- `prefers-reduced-motion` 지원.
+- CSS 함수 직접 부호반전 금지(`-clamp()` 등은 무시됨) → `calc(-1 * clamp(...))`.
 
-**When generating, read `viewport-base.css` and include its full contents in every presentation.**
+**생성 시 `viewport-base.css`를 읽어 전체를 덱의 `<style>`에 삽입**하고, 파일 하단 주석의 **DECK BOOTSTRAP SCRIPT**(균일 스케일 + 방향키/스페이스/스와이프)를 덱 `<script>`에 붙인다. 없으면 `--deck-scale`이 1로 고정돼 스테이지가 넘친다.
 
 ### Content Density Modes
 
-Ask the user whether this is primarily a reading deck or a speaking deck, then design around that answer:
+리딩 덱인지 스피킹 덱인지 먼저 묻고 그에 맞춰 설계한다.
 
-| Density mode | Best for | Design behavior |
-| ------------- | -------- | --------------- |
-| **Low density / speaker-led** | Public talks, keynote-style sharing, live explanation | One idea per slide, large type, strong visual hierarchy, generous negative space, 1-3 bullets max, more slides if needed |
-| **High density / reading-first** | Reports, handouts, async review, detailed internal docs | More self-contained slides, structured grids/tables/annotations, 4-8 bullets or 4-6 cards when readable, tighter but still intentional spacing |
+| 밀도 | 적합 | 설계 |
+| --- | --- | --- |
+| **Low / speaker-led** | 발표·키노트·라이브 설명 | 슬라이드당 아이디어 1개, 큰 타입, 강한 위계, 여백, bullet 1–3 |
+| **High / reading-first** | 리포트·핸드아웃·비동기 리뷰 | 자기완결 슬라이드, 그리드/표/주석, bullet 4–8 또는 카드 4–6 |
 
-Baseline limits still apply: no scrolling, no overflow, no overlapping panels, and no text below comfortable reading size. If content exceeds the selected density mode, split it into more slides instead of shrinking until it becomes cramped.
-
----
-
-## Phase 0: Detect Mode
-
-Determine what the user wants:
-
-- **Mode A: New Presentation** — Create from scratch. Go to Phase 1.
-- **Mode B: PPT Conversion** — Convert a .pptx file. Go to Phase 4.
-- **Mode C: Enhancement** — Improve an existing HTML presentation. Read it, understand it, enhance. **Follow Mode C modification rules below.**
-
-### Mode C: Modification Rules
-
-When enhancing existing presentations, fixed-stage fitting is the biggest risk:
-
-1. **Before adding content:** Count existing elements, check against density limits
-2. **Adding images:** Fit them inside the 1920×1080 slide canvas. If slide already has max content, split into two slides
-3. **Adding text:** Max 4-6 bullets per slide. Exceeds limits? Split into continuation slides
-4. **After ANY modification, verify:** the slide stage remains 16:9, no text overflows its card, no panels overlap, and screenshots look correct at 1280×720 plus one phone viewport
-5. **Proactively reorganize:** If modifications will cause overflow, automatically split content and inform the user. Don't wait to be asked
-
-**When adding images to existing slides:** Move image to a new slide or reduce other content first. Never add images without checking if existing content already fills the 1920×1080 slide stage.
+공통: 스크롤·오버플로·패널 겹침 금지, 가독 크기 이하 금지. 넘치면 축소 대신 슬라이드 분할.
 
 ---
 
-## Phase 1: Content Discovery (New Presentations)
+## Phase 0: 모드 감지
 
-**Ask ALL questions together** so the user fills everything out at once. If the current environment provides a native structured-question UI, use it; otherwise ask in one concise message with clearly numbered choices:
+- **Mode A: 새 프레젠테이션** — 처음부터 생성. → Phase 1.
+- **Mode B: 개선(Enhancement)** — 기존 HTML 덱 개선. 읽고 이해한 뒤 수정. 아래 규칙 준수.
 
-**Question 1 — Purpose** (header: "Purpose"):
-What is this presentation for? Options: Pitch deck / Teaching-Tutorial / Conference talk / Internal presentation
+### Mode B 수정 규칙
 
-**Question 2 — Length** (header: "Length"):
-Approximately how many slides? Options: Short 5-10 / Medium 10-20 / Long 20+
-
-**Question 3 — Content** (header: "Content"):
-Do you have content ready? Options: All content ready / Rough notes / Topic only
-
-**Question 4 — Density** (header: "Density"):
-How dense should the deck feel? Options:
-
-- "Low density / speaker-led" — Big ideas, fewer words, more visual breathing room
-- "High density / reading-first" — More self-contained detail for async reading
-
-**Do not ask about inline editing during Phase 1.** Users should not have to choose editing behavior before seeing a draft. Inline editing is a post-draft affordance: include it by default unless the user explicitly asks for a locked/export-only file.
-
-Remember the user's density choice. It affects slide count, typography scale, amount of text per slide, layout density, and whether to favor cinematic presenter slides or self-contained reading slides.
-
-If user has content, ask them to share it.
-
-### Step 1.2: Image Evaluation (if images provided)
-
-If user selected "No images" → skip to Phase 2.
-
-If user provides an image folder:
-
-1. **Scan** — List all image files (.png, .jpg, .svg, .webp, etc.)
-2. **Inspect each image** — Use the agent's available image-understanding capability. If image reading is unavailable, use filenames/metadata and ask the user to clarify only when needed
-3. **Evaluate** — For each: what it shows, USABLE or NOT USABLE (with reason), what concept it represents, dominant colors
-4. **Co-design the outline** — Curated images inform slide structure alongside text. This is NOT "plan slides then add images" — design around both from the start (e.g., 3 screenshots → 3 feature slides, 1 logo → title/closing slide)
-5. **Confirm the outline** using the same structured-question mechanism when available: "Does this slide outline and image selection look right?" Options: Looks good / Adjust images / Adjust outline
-
-**Logo in previews:** If a usable logo was identified, embed it (base64) into each style preview in Phase 2 — the user sees their brand styled three different ways.
+기존 덱 개선 시 고정 스테이지 맞춤이 최대 리스크:
+1. 콘텐츠 추가 전 기존 요소 수를 세어 밀도 한도 확인.
+2. 이미지 추가는 1920×1080 안에 맞추고, 꽉 차면 슬라이드 분할.
+3. 텍스트는 슬라이드당 4–6 bullet 상한. 초과 시 이어지는 슬라이드로.
+4. 수정 후 반드시 검증: 16:9 유지, 텍스트 오버플로 없음, 패널 겹침 없음 (1280×720 + 폰 뷰포트 스크린샷).
+5. 넘칠 것 같으면 **미리 분할하고 사용자에게 알림** — 요청을 기다리지 않는다.
 
 ---
 
-## Phase 2: Style Discovery
+## Phase 1: 콘텐츠 파악 (새 프레젠테이션)
 
-**This is the "show, don't tell" phase.** Most people can't articulate design preferences in words.
+네이티브 구조화 질문 UI가 있으면 사용, 없으면 번호로 한 번에 질문:
 
-### Step 2.0: Generate 3 Style Previews Directly
+1. **목적** — Pitch / Teaching / Conference talk / Internal
+2. **길이** — Short 5–10 / Medium 10–20 / Long 20+
+3. **콘텐츠** — 준비됨 / 러프 노트 / 주제만
+4. **밀도** — Low(speaker-led) / High(reading-first)
 
-Based on purpose, audience, mood, and content density, generate 3 distinct single-slide HTML previews showing typography, colors, animation, and overall aesthetic.
+밀도 선택은 슬라이드 수·타입 스케일·슬라이드당 텍스트량·레이아웃 밀도를 좌우하니 기억한다. 콘텐츠가 있으면 공유 요청.
 
-Do not ask the user whether they want options or a preset picker. The default discovery experience is always visual comparison.
-
-If the user already gave a vibe, use it. If they did not, infer the likely mood from the occasion, audience, content, and stakes. Keep the options diverse enough that the user can react visually instead of needing to articulate taste up front.
-
-If the user explicitly names a preset or bold template, honor that as one option and generate the remaining preview slots around it.
-
-Read [STYLE_PRESETS.md](STYLE_PRESETS.md) for safe preset candidates. If [bold-template-pack/selection-index.json](bold-template-pack/selection-index.json) exists, read that compact index too, but do not read any `design.md` files yet.
-
-| Mood                | Suggested Presets                                  |
-| ------------------- | -------------------------------------------------- |
-| Impressed/Confident | Bold Signal, Electric Studio, Dark Botanical       |
-| Excited/Energized   | Creative Voltage, Neon Cyber, Split Pastel         |
-| Calm/Focused        | Notebook Tabs, Paper & Ink, Swiss Modern           |
-| Inspired/Moved      | Dark Botanical, Vintage Editorial, Pastel Geometry |
-
-**Preview mix rules:**
-
-- Generate 3 previews by default: 1 safe preset from `STYLE_PRESETS.md`, at least 1 bold template from `bold-template-pack/selection-index.json`, and 1 wildcard.
-- The wildcard may be either a second bold template or a self-generated custom design. Choose whichever creates the strongest, most useful contrast for the user's occasion, audience, mood, and content.
-- Do not force every expressive option to come from the template library. If the brief has a sharper, more specific design opportunity than the available templates, use the wildcard slot to design freely.
-- For conservative or high-stakes decks, make the safe preset especially restrained; choose a calm, higher-formality bold template; make the wildcard either another restrained template or a custom design that feels authoritative rather than decorative.
-- For expressive decks, keep the safe preset as a readable fallback; choose one strong bold template; make the wildcard adventurous, context-specific, and clearly different from both other previews.
-- If bold template matches feel weak, use the wildcard as a custom design or fall back to another safe preset instead of forcing a template.
-
-**Custom wildcard design rules:**
-
-- Follow the Design Aesthetics section above: no generic "AI slop", no default font/color/layout choices, no purple-gradient-on-white clichés, no cookie-cutter dashboard/card look.
-- Match the user's stated occasion, audience, mood/vibe, and content density. The custom design should feel authored for this deck, not merely "stylish."
-- Make a deliberate visual thesis: distinctive typography, a committed palette, a recognizable layout system, and one strong atmospheric or graphic device.
-- Keep it feasible for a full deck. The preview must imply a design system that can expand into section, content, quote, comparison, and closing slides.
-- Use fixed 1920×1080 stage rules and pass the same preview authenticity checks as every other option.
-- Never render "custom", "wildcard", "AI-generated", or design-process labels on the slide itself.
-
-**Bold template selection rules:**
-
-- Match user purpose and mood against `mood`, `tone`, `best_for`, `avoid_for`, `formality`, `density`, and `scheme`.
-- Treat `best_for` examples as soft signals, not strict industry filters.
-- Keep the three previews genuinely different from each other.
-- After choosing bold template candidate(s), read only those candidate(s)' `preview.md` files from the `preview_md` paths in the selection index.
-- Use `preview.md` only for title-slide previews. Do not read full `design.md` files until the user picks the final template.
-- Do not read or copy `template.html` unless the selected final `design.md` is missing a critical implementation detail.
-
-**Preview authenticity rules (NON-NEGOTIABLE):**
-
-- Every style preview must look like a real first slide from the user's deck, not a diagnostic card.
-- Never render internal workflow text on a slide: no `preview`, `generated from`, `preview.md`, `template`, `preset`, `style option`, `Option A/B/C`, file names, paths, or source-doc labels.
-- Never render template names or slug names on the slide itself. Template/style names belong only in the message to the user.
-- Never render user requirement notes as slide content, such as "sharp and provocative", "safe option", "bold option", "for internal sharing", or "audience: ...", unless the user explicitly wants that exact phrase to appear in the deck.
-- If the slide needs chrome, use real deck chrome only: the deck title, section title, date, author, company, page number, or a genuine content phrase from the user's material.
-- Before opening previews, inspect the visible text and revise if any internal metadata appears.
-
-Save previews to `.frontend-slides/slide-previews/` (style-a.html, style-b.html, style-c.html). Each should be self-contained and compact, showing one animated title slide.
-
-Open each preview automatically for the user.
-
-### Step 2.1: User Picks
-
-Ask (header: "Style"):
-Which style preview do you prefer? Options: Style A: [Name] / Style B: [Name] / Style C: [Name] / Mix elements
-
-If "Mix elements", ask for specifics.
+### 이미지가 있으면
+스캔 → 각 이미지 판독(내용/사용가능 여부/개념/주조색) → **이미지와 텍스트를 함께 두고 아웃라인 공동 설계**(먼저 슬라이드 짜고 이미지 끼우는 방식 아님) → 아웃라인 확인.
 
 ---
 
-## Phase 3: Generate Presentation
+## Phase 2: 스타일 탐색 (Show, Don't Tell)
 
-Generate the full presentation using content from Phase 1 (text, or text + curated images) and style from Phase 2.
+**이 스킬의 덱은 항상 멀티테마다.** 모든 덱은 2종 이상의 테마 + 라이브 스위처(단축키·즐겨찾기·H/? 도움말)로 만들어진다 — "단일 테마" 산출물은 없다. Phase 2에서 정하는 건 (1) 구울 테마 세트, (2) 그중 기본(첫 화면) 테마다.
 
-If images were provided, the slide outline already incorporates them from Step 1.2. If not, CSS-generated visuals (gradients, shapes, patterns) provide visual interest — this is a fully supported first-class path.
+대부분 취향을 말로 못 하므로 **시각 프리뷰 3장**을 생성해 비교하게 한다. "옵션 원해요?"라고 묻지 말고 바로 보여준다.
 
-Apply the user's density choice throughout the deck:
+### Step 2.0a: 디자인시스템 라이브러리 감지 (항상)
 
-- **Low density / speaker-led:** Use more slides with fewer ideas per slide. Favor large headings, short phrases, visual metaphors, section beats, quote/statement slides, and presenter-friendly pacing.
-- **High density / reading-first:** Make slides more self-contained. Use structured grids, comparison tables, annotated diagrams, captions, and concise explanatory copy. Keep hierarchy strong so it feels designed, not like a document pasted onto slides.
+```bash
+ls ~/.claude/design-systems/*.md 2>/dev/null | grep -vi readme
+# 플러그인 번들 사용 시: <plugin>/design-systems/*.md
+```
 
-If the user's stated needs are mixed, choose the closer of the two modes instead of inventing a middle option: live audience persuasion defaults low-density; async circulation or detailed review defaults high-density.
+파싱·매핑·타입 스케일·한글 폴백·멀티테마 스위처 생성의 전체 규칙은 **[EXTERNAL_DESIGN_SYSTEMS.md](EXTERNAL_DESIGN_SYSTEMS.md)** 참고.
 
-Never let high density become visual clutter. If a high-density slide starts to overflow, split it or redesign it into a clearer structure.
+### Step 2.0b: 테마 세트 구성 (항상 멀티테마)
 
-If the user selected a bold template from `bold-template-pack`, read that one template's full `design.md` before generating. Do not read the other bold templates. Treat `design.md` as the design recipe:
+어떤 테마들을 구울지 정한다. 어느 쪽을 골라도 결과 덱은 멀티테마 + 스위처다.
 
-- Preserve its fonts, palette, decorative vocabulary, spacing rhythm, and component grammar.
-- Generate the final deck as a fixed 1920×1080 stage scaled uniformly to the viewport, regardless of whether the source template originally used `deck-stage.js` or viewport-fluid CSS.
-- Treat viewport-fluid values in `design.md` as design proportions to translate into 1920×1080 stage coordinates. Do not keep them as live viewport reflow rules in the final deck.
-- Keep the output as a single self-contained Frontend Slides HTML file.
-- Do not copy demo slide content or mimic the source template too literally.
-- Use `template.html` only as a last-resort implementation reference for the selected template.
-- After generating, verify both content overflow and panel overlap in rendered browser screenshots. `scrollHeight` checks alone are not enough because grid panels can visually cover each other.
+구조화 질문(header: "테마 세트"):
+- **큐레이션 3–5종 (추천)** — 목적·무드에 맞는 디자인시스템 몇 종 (+ 원하면 커스텀 오리지널 1종을 섞어)
+- **라이브러리 전체 (74종)** — `scripts/gen-themes.py`로 전 브랜드를 스위처에 주입 (examples/demo.html 방식)
+- **커스텀 위주** — 직접 디자인한 오리지널 테마 1–2종 + 대비용 디자인시스템 1–2종
 
-If the user selected a self-generated custom wildcard, treat that preview's CSS and layout as the design recipe:
+라이브러리 시스템은 YAML frontmatter(colors/typography/rounded/spacing/components)를 파싱해 CSS 변수로 매핑하고(§3), 웹 타입 토큰을 1920×1080 스테이지용으로 ~2–2.5× 스케일, 한글 폴백(Noto Serif/Sans KR) 주입 — 상세는 EXTERNAL_DESIGN_SYSTEMS.md. 대량이면 `gen-themes.py`가 `.theme-*` 블록과 `<option>`을 마커 사이에 자동 주입한다.
 
-- Preserve its fonts, palette, decorative vocabulary, spacing rhythm, grid logic, and component grammar.
-- Expand the same visual system across the full deck. Do not switch to a preset or bold template after the user has chosen the custom direction.
-- Design any missing slide layouts from that system rather than importing patterns from another style.
-- Keep the output fixed-stage, single-file, and visually verified like every other deck.
+### Step 2.0: 기본 테마 프리뷰 3장
 
-**Before generating, read these supporting files:**
+세트 안에서 **기본(첫 화면) 테마 후보**를 정하려고, 서로 뚜렷이 다른 단일 슬라이드 프리뷰 3장을 생성한다. 최소 1장은 디자인시스템 기반, 최소 1장은 커스텀 오리지널, 나머지 1장은 대비가 가장 강한 쪽으로. (나머지 세트 테마는 스위처에 함께 실리므로 여기선 "첫 화면"만 고르는 것.)
 
-- [html-template.md](html-template.md) — HTML architecture and JS features
-- [viewport-base.css](viewport-base.css) — Mandatory CSS (include in full)
-- [animation-patterns.md](animation-patterns.md) — Animation reference for the chosen feeling
+**커스텀 디자인 규칙**: Design Aesthetics 준수(AI slop 금지, 기본 폰트/색/레이아웃 금지). 뚜렷한 시각적 테제(개성 서체 + 커밋된 팔레트 + 인지 가능한 레이아웃 시스템 + 강한 분위기/그래픽 장치). 풀 덱(섹션/콘텐츠/인용/비교/마무리)으로 확장 가능해야.
 
-**Key requirements:**
+**프리뷰 진위 규칙 (NON-NEGOTIABLE)**: 프리뷰는 실제 첫 슬라이드처럼 보여야 하며, 내부 워크플로 텍스트를 절대 렌더하지 않는다 — `preview`, `template`, `style option`, `Option A/B/C`, 파일명/경로/디자인시스템 슬러그, "safe/bold option", "audience:…" 등 금지. 필요한 크롬은 실제 덱 크롬(제목/섹션/날짜/작성자/페이지번호)만. 열기 전 보이는 텍스트를 점검.
 
-- Single self-contained HTML file, all CSS/JS inline
-- Include the FULL contents of viewport-base.css in the `<style>` block
-- Use fonts from Fontshare or Google Fonts — never system fonts
-- Add detailed comments explaining each section
-- Every section needs a clear `/* === SECTION NAME === */` comment block
+프리뷰는 `.frontend-slides/previews/`(style-a/b/c.html)에 저장하고 자동으로 연다.
+
+### Step 2.1: 선택
+header: "Style" — **기본 테마**로 Style A/B/C 중 택1 (또는 "Mix elements"). 고른 것이 첫 화면 테마가 되고, 세트의 나머지 테마는 스위처에 함께 실린다.
 
 ---
 
-## Phase 4: PPT Conversion
+## Phase 3: 프레젠테이션 생성
 
-When converting PowerPoint files:
+Phase 1 콘텐츠 + Phase 2 스타일로 풀 덱 생성. 이미지가 없으면 CSS 생성 비주얼(그라디언트/도형/패턴)로 — 완전 지원되는 1급 경로.
 
-1. **Extract content** — Run `python scripts/extract-pptx.py <input.pptx> <output_dir>` (install python-pptx if needed: `pip install python-pptx`)
-2. **Confirm with user** — Present extracted slide titles, content summaries, and image counts
-3. **Style selection** — Proceed to Phase 2 for style discovery
-4. **Generate HTML** — Convert to chosen style, preserving all text, images (from assets/), slide order, and speaker notes (as HTML comments)
+밀도 적용: Low는 더 많은 슬라이드·적은 아이디어·큰 헤딩·섹션 비트·인용 슬라이드; High는 자기완결 슬라이드·구조화 그리드/비교표/주석. 애매하면 중간을 발명하지 말고 더 가까운 쪽으로(라이브 설득=Low, 비동기 회람=High).
+
+**생성 전 필독:**
+- [viewport-base.css](viewport-base.css) — 필수 CSS(전체 삽입) + 부트스트랩 스크립트
+- [EXTERNAL_DESIGN_SYSTEMS.md](EXTERNAL_DESIGN_SYSTEMS.md) — 디자인시스템 토큰 파싱·매핑
+- [THEME_SWITCHER.md](THEME_SWITCHER.md) — **항상 삽입** (모든 덱이 멀티테마이므로 스위처는 필수)
+
+**애니메이션 (인라인 가이드):**
+- 로드 시 **staggered reveal** 한 방에 집중: `.reveal` + 인라인 `style="--i:N"`로 순차 등장(`transition-delay: calc(var(--i)*.09s)`).
+- 고임팩트 순간 위주(제목 등장, 섹션 전환). 산발적 효과 남발 금지.
+- CSS-only 우선. `prefers-reduced-motion`에서 애니메이션/트랜지션 제거.
+
+**핵심 요건:**
+- 단일 자기완결 HTML, 모든 CSS/JS 인라인.
+- `viewport-base.css` 전체를 `<style>`에 포함 (H/? 도움말·부트스트랩 포함).
+- **멀티테마 필수** — `.deck-root`에 `theme-*` 클래스 + 2종 이상의 `.theme-*` 블록 + 우하단 스위처 + 즐겨찾기(★버튼) 삽입 (THEME_SWITCHER.md 그대로). 대량이면 `gen-themes.py`로 주입. 모든 색/폰트는 `var()`로만 참조(하드코딩 hex 금지) — 안 그러면 리스킨이 안 된다.
+- `.deck-root`에 안정적 `data-deck="<slug>"` 부여 (덱별 테마 기억).
+- 폰트는 Fontshare/Google Fonts (시스템 폰트 금지). 디자인시스템 기반이면 대체 폰트 매핑 + 한글 폴백.
+- 섹션마다 `/* === SECTION NAME === */` 주석.
+- 생성 후 렌더 스크린샷으로 오버플로 + 패널 겹침 검증(`scrollHeight`만으론 부족). 각 테마 옵션도 스크린샷으로 대비 확인.
+
+기본 테마의 폰트·팔레트·장식 어휘·간격 리듬·컴포넌트 문법을 **전 덱에 일관 확장**한다. 레이아웃·간격은 테마 무관하게 고정하고, 테마 전환 시 색/폰트만 바뀌게(리플로우 없음) 한다.
 
 ---
 
-## Phase 5: Delivery
+## Phase 4: 딜리버리
 
-1. **Clean up** — Delete `.frontend-slides/slide-previews/` if it exists
-2. **Open** — Use `open [filename].html` to launch in browser
-3. **Summarize** — Tell the user:
-   - File location, style name, slide count
-   - Navigation: Arrow keys, Space, swipe/tap if enabled
-   - How to customize: `:root` CSS variables for colors, font link for typography, `.reveal` class for animations
-   - Inline text editing is available: Hover top-left corner or press E to enter edit mode, click any text to edit, Ctrl+S to save
-   - Offer the natural post-draft actions: ask for revisions, edit text directly in the browser, or export/share
+1. 프리뷰 폴더(`.frontend-slides/previews/`) 정리.
+2. `open [filename].html`로 브라우저 실행.
+3. 사용자에게 안내:
+   - 파일 위치, 스타일명, 슬라이드 수
+   - 내비게이션: 방향키/스페이스/스와이프
+   - **도움말**: `H` 또는 `?` — 모든 덱에 기본 포함 (viewport-base.css 부트스트랩이 생성). 현재 덱의 단축키를 오버레이로 보여줌
+   - 커스터마이즈: `:root` CSS 변수(색), 폰트 링크(타입), `.reveal`(애니메이션)
+   - **Refinement Mode**: "문구·구조·디자인·톤 변경은 한꺼번에 리스트로 모아 주시면 Round 단위로 한 번에 처리합니다." ([REFINEMENT_MODE.md](REFINEMENT_MODE.md))
+   - **테마 스위처(멀티테마 덱)**: 우하단 select로 라이브 리스킨, 단축키(⌥←/→, T/⇧T), 즐겨찾기(F/⇧F/★버튼). 스위처가 자기 단축키를 H/? 도움말에 등록. 선택은 localStorage 유지. ([THEME_SWITCHER.md](THEME_SWITCHER.md))
 
 ---
 
-## Phase 6: Share & Export (Optional)
+## Phase 5: Refinement Mode
 
-After delivery, **ask the user:** _"Would you like to share this presentation? I can deploy it to a live URL (works on any device including phones) or export it as a PDF."_
+딜리버리 이후 모든 편집은 **배치 편집 프로토콜**로 — 1요청=1변경 낭비를 피한다. 상세는 **[REFINEMENT_MODE.md](REFINEMENT_MODE.md)**.
 
-Options:
-
-- **Deploy to URL** — Shareable link that works on any device
-- **Export to PDF** — Universal file for email, Slack, print
-- **Both**
-- **No thanks**
-
-If the user declines, stop here. If they choose one or both, proceed below.
-
-### 6A: Deploy to a Live URL (Vercel)
-
-This deploys the presentation to Vercel — a free hosting platform. The link works on any device (phones, tablets, laptops) and stays live until the user takes it down.
-
-**If the user has never deployed before, guide them step by step:**
-
-1. **Check if Vercel CLI is installed** — Run `npx vercel --version`. If not found, install Node.js first (`brew install node` on macOS, or download from https://nodejs.org).
-
-2. **Check if user is logged in** — Run `npx vercel whoami`.
-   - If NOT logged in, explain: _"Vercel is a free hosting service. You need an account to deploy. Let me walk you through it:"_
-     - Step 1: Ask user to go to https://vercel.com/signup in their browser
-     - Step 2: They can sign up with GitHub, Google, email — whatever is easiest
-     - Step 3: Once signed up, run `vercel login` and follow the prompts (it opens a browser window to authorize)
-     - Step 4: Confirm login with `vercel whoami`
-   - Wait for the user to confirm they're logged in before proceeding.
-
-3. **Deploy** — Run the deploy script:
-
-   ```bash
-   bash scripts/deploy.sh <path-to-presentation>
-   ```
-
-   The script accepts either a folder (with index.html) or a single HTML file.
-
-4. **Share the URL** — Tell the user:
-   - The live URL (from the script output)
-   - That it works on any device — they can text it, Slack it, email it
-   - To take it down later: visit https://vercel.com/dashboard and delete the project
-   - The Vercel free tier is generous — they won't be charged
-
-**⚠ Deployment gotchas:**
-
-- **Local images/videos must travel with the HTML.** The deploy script auto-detects files referenced via `src="..."` in the HTML and bundles them. But if the presentation references files via CSS `background-image` or unusual paths, those may be missed. **Before deploying, verify:** open the deployed URL and check that all images load. If any are broken, the safest fix is to put the HTML and all its assets into a single folder and deploy the folder instead of a standalone HTML file.
-- **Prefer folder deployments when the presentation has many assets.** If the presentation lives in a folder with images alongside it (e.g., `my-deck/index.html` + `my-deck/logo.png`), deploy the folder directly: `bash scripts/deploy.sh ./my-deck/`. This is more reliable than deploying a single HTML file because the entire folder contents are uploaded as-is.
-- **Filenames with spaces work but can cause issues.** The script handles spaces in filenames, but Vercel URLs encode spaces as `%20`. If possible, avoid spaces in image filenames. If the user's images have spaces, the script handles it — but if images still break, renaming files to use hyphens instead of spaces is the fix.
-- **Redeploying updates the same URL.** Running the deploy script again on the same presentation overwrites the previous deployment. The URL stays the same — no need to share a new link.
-
-### 6B: Export to PDF
-
-This captures each slide as a screenshot and combines them into a PDF. Perfect for email attachments, embedding in documents, or printing.
-
-**Note:** Animations and interactivity are not preserved — the PDF is a static snapshot. This is normal and expected; mention it to the user so they're not surprised.
-
-1. **Run the export script:**
-
-   ```bash
-   bash scripts/export-pdf.sh <path-to-html> [output.pdf]
-   ```
-
-   If no output path is given, the PDF is saved next to the HTML file.
-
-2. **What happens behind the scenes** (explain briefly to the user):
-   - A headless browser opens the presentation at 1920×1080 (standard widescreen)
-   - It screenshots each slide one by one
-   - All screenshots are combined into a single PDF
-   - The script needs Playwright (a browser automation tool) — it will install automatically if missing
-
-3. **If Playwright installation fails:**
-   - The most common issue is Chromium not downloading. Run: `npx playwright install chromium`
-   - If that fails too, it may be a network/firewall issue. Ask the user to try on a different network.
-
-4. **Deliver the PDF** — The script auto-opens it. Tell the user:
-   - The file location and size
-   - That it works everywhere — email, Slack, Notion, Google Docs, print
-   - Animations are replaced by their final visual state (still looks great, just static)
-
-**⚠ PDF export gotchas:**
-
-- **First run is slow.** The script installs Playwright and downloads a Chromium browser (~150MB) into a temp directory. This happens once per run. Warn the user it may take 30-60 seconds the first time — subsequent exports within the same session are faster.
-- **Slides must use `class="slide"`.** The export script finds slides by querying `.slide` elements. If the presentation uses a different class name, the script will report "0 slides found" and fail. All presentations generated by this skill use `.slide`, so this only matters for externally-created HTML.
-- **Local images must be loadable via HTTP.** The script starts a local server and loads the HTML through it (so Google Fonts and relative image paths work). If images use absolute filesystem paths (e.g., `src="/Users/name/photo.png"`) instead of relative paths (e.g., `src="photo.png"`), they won't load. Generated presentations always use relative paths, but converted or user-provided decks might not — check and fix if needed.
-- **Local images appear in the PDF** as long as they are in the same directory as (or relative to) the HTML file. The export script serves the HTML's parent directory over HTTP, so relative paths like `src="photo.png"` resolve correctly — including filenames with spaces. If images still don't appear, check: (1) the image files actually exist at the referenced path, (2) the paths are relative, not absolute filesystem paths like `/Users/name/photo.png`.
-- **Large presentations produce large PDFs.** Each slide is captured as a full 1920×1080 PNG screenshot. An 18-slide deck can produce a ~20MB PDF. If the PDF exceeds 10MB, ask the user: _"The PDF is [size]. Would you like me to compress it? It'll look slightly less sharp but the file will be much smaller."_ If yes, re-run the export with the `--compact` flag:
-  ```bash
-  bash scripts/export-pdf.sh <path-to-html> [output.pdf] --compact
-  ```
-  This renders at 1280×720 instead of 1920×1080, typically cutting file size by 50-70% with minimal visual difference.
+핵심 규칙:
+1. **단일 문구 수정** — 한 줄 문구 변경도 즉시 적용. (브라우저 자동저장 에디터는 로드맵.)
+2. **배치 처리** — 리스트(번호/슬라이드별/자유형)를 받으면 **한 응답에 전부** 처리. 독립 항목은 병렬 Edit. 중간 확인 질문 없이.
+3. **스코프 고정** — 요청한 것만. "하는 김에 X도" 금지.
+4. **리로드 안내 1회** — 끝에 "새로고침해서 확인해주세요" 한 줄.
+5. **디자인시스템 변경** — "X 디자인 시스템으로 바꿔"가 있으면 먼저 EXTERNAL_DESIGN_SYSTEMS.md 경로로 처리 후 나머지.
 
 ---
 
 ## Supporting Files
 
-| File                                               | Purpose                                                              | When to Read              |
-| -------------------------------------------------- | -------------------------------------------------------------------- | ------------------------- |
-| [STYLE_PRESETS.md](STYLE_PRESETS.md)               | 12 curated visual presets with colors, fonts, and signature elements | Phase 2 (style selection) |
-| [bold-template-pack/selection-index.json](bold-template-pack/selection-index.json) | Compact bold template metadata for candidate selection | Phase 2 (style selection) |
-| [bold-template-pack/templates/*/preview.md](bold-template-pack/templates/) | Lightweight style cards for shortlisted bold title previews | Phase 2 after shortlisting |
-| [bold-template-pack/templates/*/design.md](bold-template-pack/templates/) | Detailed design-system docs for the selected bold template only | Phase 3 after user selection |
-| [viewport-base.css](viewport-base.css)             | Mandatory fixed-stage CSS — copy into every presentation             | Phase 3 (generation)      |
-| [html-template.md](html-template.md)               | HTML structure, JS features, code quality standards                  | Phase 3 (generation)      |
-| [animation-patterns.md](animation-patterns.md)     | CSS/JS animation snippets and effect-to-feeling guide                | Phase 3 (generation)      |
-| [scripts/extract-pptx.py](scripts/extract-pptx.py) | Python script for PPT content extraction                             | Phase 4 (conversion)      |
-| [scripts/deploy.sh](scripts/deploy.sh)             | Deploy slides to Vercel for instant sharing                          | Phase 6 (sharing)         |
-| [scripts/export-pdf.sh](scripts/export-pdf.sh)     | Export slides to PDF                                                 | Phase 6 (sharing)         |
+| 파일 | 용도 | 읽는 시점 |
+| --- | --- | --- |
+| [viewport-base.css](viewport-base.css) | 고정 16:9 스테이지 CSS + 부트스트랩 스크립트 (전 덱 삽입) | Phase 3 |
+| [EXTERNAL_DESIGN_SYSTEMS.md](EXTERNAL_DESIGN_SYSTEMS.md) | `design-systems/*.md` 파싱·토큰→CSS 매핑·타입 스케일·한글 폴백·멀티테마 | Phase 2 |
+| [THEME_SWITCHER.md](THEME_SWITCHER.md) | 테마 스위처 + 단축키 + 즐겨찾기 + 도움말 패턴 | 멀티테마 덱 (Phase 3/4) |
+| [REFINEMENT_MODE.md](REFINEMENT_MODE.md) | 딜리버리 후 배치 편집 프로토콜 | Phase 5 |
+| [scripts/add-design-system.sh](scripts/add-design-system.sh) | getdesign.md 카탈로그에서 디자인시스템 받기 (`--list`/`--all`/`<brand>`/`--force`) | 라이브러리에 없는 브랜드가 필요할 때 |
+| [scripts/gen-themes.py](scripts/gen-themes.py) | 라이브러리 → 덱에 `.theme-*` CSS + `<option>` 자동 주입 (마커 사이) | 멀티테마 스위처 덱 생성 |
+| [design-systems/](design-systems/) | 번들된 디자인시스템 라이브러리 (getdesign.md, 74종) | Phase 2 |
+| [examples/](examples/) | 데모 덱(테마 스위처 + 단축키 + 즐겨찾기) | 참고 |
+| [html-template.md](html-template.md) | HTML 아키텍처·JS 기능 레퍼런스 | Phase 3 참고 |
+| [STYLE_PRESETS.md](STYLE_PRESETS.md) · [animation-patterns.md](animation-patterns.md) | 프리셋·애니메이션 레퍼런스 | 필요 시 |
+| [bold-template-pack/](bold-template-pack/) | 볼드 템플릿 라이브러리 — 테마 시드로 활용 가능 | Phase 2 참고 |
+| scripts/{extract-pptx.py · deploy.sh · export-pdf.sh} | PPT 변환 · 배포 · PDF export | 선택 |
+
+## 추가 리소스 (이 저장소에 포함)
+
+멀티테마·스위처가 기본 축이지만, 아래 기능도 그대로 쓸 수 있다:
+- **bold-template-pack** (볼드 템플릿) · **STYLE_PRESETS.md** (프리셋) · **animation-patterns.md** — 스타일/모션 소스
+- **scripts/**: `extract-pptx.py`(PPT 변환) · `deploy.sh`(배포) · `export-pdf.sh`(PDF)
+- **html-template.md** — HTML 아키텍처 레퍼런스
+
+## 로드맵
+
+- 브라우저 인라인 자동저장 에디터 (File System Access)
