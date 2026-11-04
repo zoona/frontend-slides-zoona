@@ -1,6 +1,6 @@
 ---
-name: frontend-slides
-description: HTML 발표자료를 처음부터 만드는 스킬 — 고정 16:9 스테이지, 디자인시스템 테마(라이브 스위처 + 즐겨찾기 + 단축키), 배치 편집(Refinement Mode). Invoke for "/frontend-slides", "deck 만들어", "발표자료", "슬라이드", "수정 모드", "refine", 또는 사용자가 제로 디펜던시 HTML 프레젠테이션을 만들거나 다듬고 싶을 때.
+name: zoona-slides
+description: HTML 발표자료를 처음부터 만드는 스킬 — 고정 16:9 스테이지, 디자인시스템 테마(라이브 스위처 + 즐겨찾기 + 단축키), 배치 편집(Refinement Mode). Invoke for "/zoona-slides", "/frontend-slides", "deck 만들어", "발표자료", "슬라이드", "수정 모드", "refine", 또는 사용자가 제로 디펜던시 HTML 프레젠테이션을 만들거나 다듬고 싶을 때.
 ---
 
 # frontend-slides
@@ -157,6 +157,10 @@ Phase 1 콘텐츠 + Phase 2 스타일로 풀 덱 생성. 이미지가 없으면 
 
 기본 테마의 폰트·팔레트·장식 어휘·간격 리듬·컴포넌트 문법을 **전 덱에 일관 확장**한다. 레이아웃·간격은 테마 무관하게 고정하고, 테마 전환 시 색/폰트만 바뀌게(리플로우 없음) 한다.
 
+### 움직임 장면 (선택)
+
+**기본 생성 방식은 위 절차 그대로이고, 움직임 장면은 사용자가 요청했을 때만 쓴다.** 요청이 없으면 `motion/`을 덱에 넣지 않는다. 사용 시 구조도, 시간선, 지도, 흐름, 큰 숫자처럼 설명 순서가 있는 장에 **[MOTION_SCENES.md](MOTION_SCENES.md)**의 장면을 쓰고, 나머지 장은 일반 슬라이드로 둔다. 장면은 데이터만 채우며 키 한 번에 비트 하나가 재생된다. 같은 장면으로 PDF와 영상을 만든다.
+
 ---
 
 ## Phase 4: 딜리버리
@@ -194,6 +198,8 @@ Phase 1 콘텐츠 + Phase 2 스타일로 풀 덱 생성. 이미지가 없으면 
 | [EXTERNAL_DESIGN_SYSTEMS.md](EXTERNAL_DESIGN_SYSTEMS.md) | `design-systems/*.md` 파싱·토큰→CSS 매핑·타입 스케일·한글 폴백·멀티테마 | Phase 2 |
 | [THEME_SWITCHER.md](THEME_SWITCHER.md) | 테마 스위처 + 단축키 + 즐겨찾기 + 도움말 패턴 | 멀티테마 덱 (Phase 3/4) |
 | [REFINEMENT_MODE.md](REFINEMENT_MODE.md) | 딜리버리 후 배치 편집 프로토콜 | Phase 5 |
+| [MOTION_SCENES.md](MOTION_SCENES.md) · [motion/](motion/) | 움직임 장면 라이브러리 사용법과 런타임 | 설명 순서가 있는 장을 만들 때 (Phase 3) |
+| [scripts/inline-motion.py](scripts/inline-motion.py) · [scripts/motion-capture.sh](scripts/motion-capture.sh) | 단일 HTML 묶기 · 멈춤 지점 검사, PNG, PDF, 영상 출력 | 움직임 장면 덱 |
 | [scripts/add-design-system.sh](scripts/add-design-system.sh) | getdesign.md 카탈로그에서 디자인시스템 받기 (`--list`/`--all`/`<brand>`/`--force`) | 라이브러리에 없는 브랜드가 필요할 때 |
 | [scripts/gen-themes.py](scripts/gen-themes.py) | 라이브러리 → 덱에 `.theme-*` CSS + `<option>` 자동 주입 (마커 사이) | 멀티테마 스위처 덱 생성 |
 | [design-systems/](design-systems/) | 번들된 디자인시스템 라이브러리 (getdesign.md, 74종) | Phase 2 |

@@ -1,0 +1,33 @@
+/* deck-motion.css — 움직임 장면 공용 스타일. viewport-base.css 뒤에 인라인한다.
+   색은 덱 테마 변수를 따르고, 덱이 --dm-* 를 덮어쓸 수 있다. */
+:root{
+  --dm-fg:var(--text-primary,#eef2f8);
+  --dm-mut:var(--text-secondary,#8b98ad);
+  --dm-dim:color-mix(in srgb,var(--dm-mut) 45%,transparent);
+  --dm-bg:var(--bg-primary,#0b0f16);
+  --dm-accent:var(--accent,#5b9dff);
+  --dm-warn:#f2a33c;
+  --dm-on:#ffffff;
+  --dm-c1:var(--dm-accent);--dm-c2:#39c6b5;--dm-c3:#f2a33c;--dm-c4:#a98bf5;--dm-c5:#ef7fa8;
+  --dm-font:var(--font-body,"Pretendard Variable",Pretendard,-apple-system,sans-serif);
+  --dm-font-title:var(--font-display,var(--dm-font));
+  --dm-hand:"Gaegu","Nanum Pen Script",var(--dm-font);
+}
+.dm-slide{background:var(--dm-bg)}
+.dm-svg{position:absolute;left:0;top:0;width:1920px;height:1080px;max-width:none;overflow:visible}
+.dm-svg text{font-family:var(--dm-font);text-rendering:geometricPrecision}
+.dm-svg .dm-title{font-family:var(--dm-font-title)}
+.dm-canvas{position:absolute;left:0;top:0;width:1920px;height:1080px;max-width:none}
+.dm-sketch .dm-svg text{font-family:var(--dm-hand)}
+.dm-card{position:absolute;display:flex;flex-direction:column;padding:40px 36px;border-radius:22px;color:var(--dm-fg);font-family:var(--dm-font);overflow:hidden}
+.dm-card .dm-tag{font-size:26px;font-weight:700;color:var(--dm-accent)}
+.dm-card h3{font-size:40px;line-height:1.22;margin:16px 0 0;letter-spacing:-.5px;font-weight:800;font-family:var(--dm-font-title)}
+.dm-card p{font-size:29px;line-height:1.45;color:var(--dm-mut);margin:26px 0 0;white-space:pre-line}
+.dm-flipwrap .dm-card p{margin-top:auto;font-size:26px}
+.dm-flipwrap{position:absolute;transform-style:preserve-3d;will-change:transform}
+.dm-flipwrap .dm-card{inset:0;backface-visibility:hidden;background:color-mix(in srgb,var(--dm-fg) 7%,var(--dm-bg));border:2px solid color-mix(in srgb,var(--dm-fg) 18%,transparent)}
+.dm-flipwrap .dm-q{align-items:center;justify-content:center;border-color:var(--dm-accent);font-size:200px;font-weight:800;color:var(--dm-accent)}
+.dm-flipwrap .dm-back{transform:rotateY(180deg);background:var(--dm-accent);border-color:var(--dm-accent);color:var(--dm-on)}
+.dm-flipwrap .dm-back .dm-tag,.dm-flipwrap .dm-back p{color:var(--dm-on)}
+.dm-stage3d{position:absolute;left:0;top:250px;width:1920px;height:620px;perspective:1500px}
+html.dm-capture .slide,html.dm-capture .slide *{transition:none!important;animation:none!important}
