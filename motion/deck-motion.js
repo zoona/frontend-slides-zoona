@@ -294,13 +294,13 @@ function space(slide,data,kit){
 /* 입체: 3D 좌표 요소를 카메라로 투영해 그림. 비트마다 cam과 요소 상태를 보간(morph와 같은 set, hide 규칙).
    깊이가 뜻을 가질 때만 씀(층 쌓기, 텐서 모양). 글자는 기울이지 않고 투영된 자리에 화면 기준으로 세움.
    요소: sheet(격자 판, z 위치의 XY 평면), dot(점), line(x,y,z에서 x2,y2,z2까지), text(화면 좌표, world:true면 3D 위치에).
-   cam: yaw, pitch(도), zoom, ox, oy(화면 중심), cx, cy, cz(회전 중심), f(원근 거리). */
+   cam: yaw, pitch(도), zoom, ox, oy(화면 중심), cx, cy, cz(회전 중심), f(원근 거리), fog(이 깊이 너머는 흐려짐, FPV용). */
 const NUM3=['x','y','z','x2','y2','z2','w','h','r','fill','v','a','size','lw','cellA','rowA'];
 function solid(slide,data,kit){
   const B=data.beats&&data.beats.length?data.beats:[{}];
   const beats=B.map((b,i)=>b.dur||(i===0?2.4:2.6));const st=starts(beats),head=Head(kit,Object.assign({},data,{beats:B}),st);
   const mv=data.move||1.2,bAt=t=>{let b=0;while(b+1<B.length&&t>=st[b+1])b++;return b};
-  const CAM=[];let cc=Object.assign({yaw:0,pitch:0,zoom:1,ox:960,oy:600,cx:0,cy:0,cz:0,f:2600},data.cam||{});B.forEach(b=>{cc=Object.assign({},cc,b.cam||{});CAM.push(cc)});
+  const CAM=[];let cc=Object.assign({yaw:0,pitch:0,zoom:1,ox:960,oy:600,cx:0,cy:0,cz:0,f:2600,fog:1e6},data.cam||{});B.forEach(b=>{cc=Object.assign({},cc,b.cam||{});CAM.push(cc)});
   const camAt=t=>{const b=bAt(t),to=CAM[b],from=b?CAM[b-1]:to,p=eio(seg(t,st[b],st[b]+(B[b].camMove||mv*1.4)));const o={};for(const k in to)o[k]=lerp(from[k],to[k],p);return o};
   const EL=(data.els||[]).map((e,i)=>Object.assign({i},e));
   EL.forEach(e=>{let cur=Object.assign({a:0},e);e.S=[];e.D=[];
@@ -315,7 +315,7 @@ function solid(slide,data,kit){
       else o[k]=p<.5&&A!==undefined?A:Z}return o};
   const proj=(c,x,y,z)=>{x-=c.cx;y-=c.cy;z-=c.cz;const ya=c.yaw*Math.PI/180,pa=c.pitch*Math.PI/180;
     const X=x*Math.cos(ya)+z*Math.sin(ya);let Z=-x*Math.sin(ya)+z*Math.cos(ya);const Y=y*Math.cos(pa)-Z*Math.sin(pa);Z=y*Math.sin(pa)+Z*Math.cos(pa);
-    const s=c.f/(c.f+Z)*c.zoom;return[c.ox+X*s,c.oy+Y*s,Z]};
+    const s=c.f/Math.max(1,c.f+Z)*c.zoom;return[c.ox+X*s,c.oy+Y*s,Z]};
   const P=pts=>pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
   const body=kit.group({}),top=kit.group({});
   const R=EL.map(e=>{const r={e};
@@ -331,14 +331,14 @@ function solid(slide,data,kit){
   return{beats,draw(t){head.draw(t);const c=camAt(t);const zs=[];
     R.forEach(r=>{const e=r.e,s=stateAt(e,t),a=Math.max(0,s.a),tone=tv(s.tone||e.tone||'mut'),vis=a>.001?'visible':'hidden';
       if(e.type==='sheet'){const x=s.x,y=s.y,z=s.z||0,w=s.w,h=s.h;const q=[proj(c,x,y,z),proj(c,x+w,y,z),proj(c,x+w,y+h,z),proj(c,x,y+h,z)];
-        r.poly.setAttribute('points',P(q));r.poly.style.fill=tone;r.poly.style.fillOpacity=s.fill==null?.08:s.fill;r.poly.style.stroke=tone;r.poly.style.strokeWidth=s.lw==null?2:s.lw;r.g.style.opacity=a;r.g.style.visibility=vis;
-        if(r.cells.length&&a>.001){const gp=e.gap==null?3:e.gap,cw=(w-gp*(e.cols+1))/e.cols,ch=(h-gp*(e.rows+1))/e.rows,ct=tv(s.cellTone||e.cellTone||'accent');
+        const zmin=Math.min(q[0][2],q[1][2],q[2][2],q[3][2]),near=cl((c.f+zmin-.3*c.f)/(.35*c.f))*cl(1-(zmin-c.f*.2)/c.fog),an=a*near,vn=an>.001?'visible':'hidden';r.poly.setAttribute('points',P(q));r.poly.style.fill=tone;r.poly.style.fillOpacity=s.fill==null?.08:s.fill;r.poly.style.stroke=tone;r.poly.style.strokeWidth=s.lw==null?2:s.lw;r.g.style.opacity=an;r.g.style.visibility=vn;
+        if(r.cells.length&&an>.001){const gp=e.gap==null?3:e.gap,cw=(w-gp*(e.cols+1))/e.cols,ch=(h-gp*(e.rows+1))/e.rows,ct=tv(s.cellTone||e.cellTone||'accent');
           r.cells.forEach((cel,k)=>{const i=Math.floor(k/e.cols),j=k%e.cols,cx=x+gp+j*(cw+gp),cy=y+gp+i*(ch+gp),v=s.vals?s.vals[k]:.5;
             cel.setAttribute('points',P([proj(c,cx,cy,z),proj(c,cx+cw,cy,z),proj(c,cx+cw,cy+ch,z),proj(c,cx,cy+ch,z)]));cel.style.fill=ct;cel.style.opacity=(s.cellA==null?1:s.cellA)*(.08+.92*cl(v))})}
         zs.push([r,(q[0][2]+q[2][2])/2]);
-        const lp=s.lp||'top',fs=e.size||26;const an=lp==='left'?[(q[0][0]+q[3][0])/2,(q[0][1]+q[3][1])/2]:lp==='right'?[(q[1][0]+q[2][0])/2,(q[1][1]+q[2][1])/2]:lp==='bottom'?[(q[2][0]+q[3][0])/2,Math.max(q[2][1],q[3][1])]:[(q[0][0]+q[1][0])/2,Math.min(q[0][1],q[1][1])];
-        if(s.label){place(r.lb,null,an[0],an[1],lp,fs);r.lb.set(s.label);r.lb.tone(s.ltone||s.tone||'fg');r.lb.show(a)}else r.lb.show(0);
-        r.rl.forEach((tx,i)=>{const yy=y+(h/e.rows)*(i+.5),p=proj(c,x,yy,z);tx.move(p[0]-14,p[1]+9);tx.show(a*(s.rowA==null?1:s.rowA))})}
+        const lp=s.lp||'top',fs=e.size||26;const ap=lp==='left'?[(q[0][0]+q[3][0])/2,(q[0][1]+q[3][1])/2]:lp==='right'?[(q[1][0]+q[2][0])/2,(q[1][1]+q[2][1])/2]:lp==='bottom'?[(q[2][0]+q[3][0])/2,Math.max(q[2][1],q[3][1])]:[(q[0][0]+q[1][0])/2,Math.min(q[0][1],q[1][1])];
+        if(s.label){place(r.lb,null,ap[0],ap[1],lp,fs);r.lb.set(s.label);r.lb.tone(s.ltone||s.tone||'fg');r.lb.show(an)}else r.lb.show(0);
+        r.rl.forEach((tx,i)=>{const yy=y+(h/e.rows)*(i+.5),p=proj(c,x,yy,z);tx.move(p[0]-14,p[1]+9);tx.show(an*(s.rowA==null?1:s.rowA))})}
       else if(e.type==='dot'){const p=proj(c,s.x,s.y,s.z||0),k=c.f/(c.f+p[2])*c.zoom;r.c.setAttribute('cx',p[0]);r.c.setAttribute('cy',p[1]);r.c.setAttribute('r',Math.max(0,(s.r||12)*k));r.c.style.fill=tone;r.g.style.opacity=a;zs.push([r,p[2]]);
         if(s.label){place(r.lb,null,p[0]+(s.lp==='left'?-(s.r||12):(s.r||12)),p[1],s.lp||'right',e.size||24);r.lb.set(s.label);r.lb.tone(s.ltone||'fg');r.lb.show(a)}else r.lb.show(0)}
       else if(e.type==='line'){const p0=proj(c,s.x,s.y,s.z||0),p1=proj(c,s.x2,s.y2,s.z2||0);r.l.setAttribute('d',`M${p0[0].toFixed(1)} ${p0[1].toFixed(1)}L${p1[0].toFixed(1)} ${p1[1].toFixed(1)}`);r.l.style.stroke=tone;r.l.style.strokeWidth=s.lw||2.5;if(s.dash)r.l.setAttribute('stroke-dasharray',s.dash);r.g.style.opacity=a;r.g.style.visibility=vis;zs.push([r,Math.min(p0[2],p1[2])-1]);
@@ -358,7 +358,7 @@ function init(){
   const slides=[...document.querySelectorAll('.deck-stage .slide, .slide')].filter((s,i,a)=>a.indexOf(s)===i);if(!slides.length)return;
   const reduced=matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
   const S=slides.map(el=>{const type=el.dataset.motion;if(!type||!SCENES[type])return{el,type:null,beats:[0],draw(){}};
-    el.classList.add('dm-slide');const j=el.querySelector('script[type="application/json"]');const data=j?JSON.parse(j.textContent):{};const kit=Kit(el);const sc=SCENES[type](el,data,kit);kit.refit();return{el,type,kit,beats:sc.beats,draw:sc.draw}});
+    el.classList.add('dm-slide');const j=el.querySelector('script[type="application/json"]');const data=j?JSON.parse(j.textContent):{};const kit=Kit(el);const sc=SCENES[type](el,data,kit);kit.refit();return{el,type,kit,beats:sc.beats,draw:sc.draw,zoom:data.zoom||null}});
   S.forEach(s=>{s.ends=[];let a=0;s.beats.forEach(b=>{a+=b;s.ends.push(a)});s.dur=a});
   const stops=[];S.forEach((s,i)=>s.ends.forEach((t,b)=>stops.push({slide:i,beat:b,t})));
   let cur=-1,si=0,T=0,target=0,raf=null,last=0;
@@ -368,10 +368,29 @@ function init(){
   function activate(i){if(si===i&&S[i].el.classList.contains('active'))return;si=i;S.forEach((s,k)=>s.el.classList.toggle('active',k===i));document.documentElement.style.setProperty('--slide',i)}
   const paint=()=>S[si].draw(T);
   function stopAnim(){if(raf){cancelAnimationFrame(raf);raf=null}}
+  /* 장 사이 줌 전환: 장 JSON에 zoom:{hub:구조도 장 번호(1부터), rect:[x,y,w,h](그 장의 칸)}.
+     구조도에서 다음 장으로 갈 때 그 칸으로 들어가고, 칸이 다른 장끼리는 구조도로 나왔다가 옆 칸으로 들어감 */
+  const box=r=>{const w=r[2],h=w*9/16;return[r[0]+r[2]/2-w/2,r[1]+r[3]/2-h/2,w,h]};
+  const zin=(r,p)=>{const k=Math.exp(lerp(0,Math.log(1920/r[2]),p)),cx=r[0]+r[2]/2,cy=r[1]+r[3]/2,sx=lerp(cx,960,p),sy=lerp(cy,540,p);return{k,x:cx-sx/k,y:cy-sy/k}};
+  function zoomPlan(a,b){if(Math.abs(a-b)!==1)return null;const za=S[a].zoom,zb=S[b].zoom;
+    if(zb&&zb.hub-1===a)return{hub:a,A:null,B:b,ra:null,rb:box(zb.rect)};
+    if(za&&za.hub-1===b)return{hub:b,A:a,B:null,ra:box(za.rect),rb:null};
+    if(za&&zb&&za.hub===zb.hub&&za.rect.join()!==zb.rect.join())return{hub:za.hub-1,A:a,B:b,ra:box(za.rect),rb:box(zb.rect)};return null}
+  let zraf=null,zdone=null;
+  function zoomClear(){if(zraf){cancelAnimationFrame(zraf);zraf=null}S.forEach(s=>{const st=s.el.style;st.transform=st.transformOrigin=st.visibility=st.opacity=st.zIndex=st.transition='';});const f=zdone;zdone=null;if(f)f()}
+  function zoomRun(z,done){zoomClear();zdone=done;const hub=S[z.hub],D=z.ra&&z.rb?1.9:1.25,t0=performance.now();hub.draw(hub.dur);
+    const L=[[hub,null,1],[z.A!=null&&z.A!==z.hub?S[z.A]:null,z.ra,3],[z.B!=null&&z.B!==z.hub?S[z.B]:null,z.rb,2]];
+    L.forEach(([s,,zi])=>{if(!s)return;const st=s.el.style;st.transition='none';st.transformOrigin='0 0';st.visibility='visible';st.zIndex=zi});
+    const view=p=>{if(z.ra&&z.rb)return p<.5?zin(z.ra,1-eio(p*2)):zin(z.rb,eio(p*2-1));return z.rb?zin(z.rb,eio(p)):zin(z.ra,1-eio(p))};
+    const frame=n=>{const p=Math.min(1,(n-t0)/1000/D),v=view(p);
+      L.forEach(([s,r])=>{if(!s)return;const st=s.el.style;if(!r){st.transform=`scale(${v.k}) translate(${-v.x}px,${-v.y}px)`;st.opacity=1;return}
+        const f=r[2]*v.k/1920;st.transform=`scale(${v.k}) translate(${r[0]-v.x}px,${r[1]-v.y}px) scale(${r[2]/1920})`;st.opacity=cl((f-.22)/.38)});
+      if(p>=.5&&zdone){const f=zdone;zdone=null;f()}if(p<1)zraf=requestAnimationFrame(frame);else{zraf=null;zoomClear()}};
+    zraf=requestAnimationFrame(frame)}
   function tick(n){const dt=(n-last)/1000;last=n;const d=Math.sign(target-T),r=d<0?3:1;T+=d*dt*r;if(d===0||(d>0&&T>=target)||(d<0&&T<=target)){T=target;paint();raf=null;return}paint();raf=requestAnimationFrame(tick)}
   function run(){if(reduced||S[si].dur===0){T=target;paint();return}if(!raf){last=performance.now();raf=requestAnimationFrame(tick)}}
   function goStop(n,instant){if(n<0||n>=stops.length)return;const st=stops[n],prev=stops[cur];cur=n;
-    if(!prev||st.slide!==prev.slide){stopAnim();activate(st.slide);const forward=!prev||st.slide>prev.slide;T=forward&&!instant&&st.beat===0?0:st.t;target=st.t;if(instant||!forward)T=st.t;paint();if(T!==target)run()}
+    if(zraf)zoomClear();if(!prev||st.slide!==prev.slide){stopAnim();const zp=!instant&&!reduced&&prev?zoomPlan(prev.slide,st.slide):null;activate(st.slide);const forward=!prev||st.slide>prev.slide;T=forward&&!instant&&st.beat===0?0:st.t;target=st.t;if(instant||!forward)T=st.t;paint();if(zp)zoomRun(zp,()=>{if(T!==target)run()});else if(T!==target)run()}
     else{target=st.t;if(instant){stopAnim();T=target;paint()}else run()}setHash();navUpdate()}
   const next=()=>goStop(cur+1),prev=()=>goStop(cur-1);
   addEventListener('keydown',e=>{if(e.metaKey||e.ctrlKey||e.altKey)return;const k=e.key;
