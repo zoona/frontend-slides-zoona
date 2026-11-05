@@ -190,7 +190,108 @@ function dots(slide,data,kit){
   }};
 }
 
-const SCENES={timeline,map,flow,cards,dots};
+/* 상태 보간: 요소마다 비트별 상태를 주면 그 사이를 이어서 그림. 숫자는 세면서 바뀌고 모양은 늘거나 줄며 옮겨 감.
+   요소 type: box(x,y 왼쪽 위, w,h, fill, label, sub, lp, rows/cols/vals면 칸 격자), dot(x,y 중심, r, label), ring(x,y,r,label),
+   text(x,y,s 또는 v+d+pre+suf, size, weight, anchor), link(from,to,arrow). 공통 a(투명도), tone.
+   비트 set:{id:{상태}}에 처음 나온 요소는 a=1로 나타남. hide:[id]는 사라짐. 비트마다 note 가능. */
+const NUMK=['x','y','w','h','r','fill','v','a','size','lw'];
+function morph(slide,data,kit){
+  const B=data.beats&&data.beats.length?data.beats:[{}];
+  const beats=B.map((b,i)=>b.dur||(i===0?2.4:2.2));const st=starts(beats),head=Head(kit,Object.assign({},data,{beats:B}),st);
+  const EL=(data.els||[]).map((e,i)=>Object.assign({i},e));const byId={};EL.forEach(e=>byId[e.id]=e);
+  EL.forEach(e=>{let cur=Object.assign({a:0},e);e.S=[];e.D=[];
+    B.forEach((b,bi)=>{const set=b.set&&b.set[e.id];const prev=Object.assign({},cur);let d=0;
+      if(set){const keys=Object.keys(b.set);d=set._d!=null?set._d:Math.min(.6,keys.indexOf(e.id)*(b.stagger==null?.06:b.stagger));cur=Object.assign({},cur,set);if(set.a==null&&prev.a===0)cur.a=1}
+      if((b.hide||[]).includes(e.id))cur=Object.assign({},cur,{a:0});
+      e.S.push(Object.assign({},cur));e.D.push(d)})});
+  const mv=data.move||.9;
+  const stateAt=(e,t)=>{let b=0;while(b+1<B.length&&t>=st[b+1])b++;const to=e.S[b];let from=b?e.S[b-1]:Object.assign({},e.S[0],{a:0});if(from.a===0)from=Object.assign({},to,{a:0});
+    const p=eio(seg(t,st[b]+e.D[b],st[b]+e.D[b]+mv));const o={};for(const k in to){const A=from[k],Z=to[k];
+      if(NUMK.includes(k)&&typeof Z==='number'&&typeof A==='number')o[k]=lerp(A,Z,p);
+      else if(k==='vals'&&Array.isArray(Z)){o[k]=Z.map((z,j)=>lerp(A&&A[j]!=null?A[j]:z,z,p))}
+      else o[k]=p<.5&&A!==undefined?A:Z}o._p=p;o._new=from.a===0&&to.a>0;return o};
+  const g=kit.group({});
+  const R=EL.map(e=>{const r={e};
+    if(e.type==='box'){r.rect=kit.mk('rect',{rx:e.rx==null?10:e.rx},g);r.cells=[];if(e.rows&&e.cols)for(let k=0;k<e.rows*e.cols;k++)r.cells.push(kit.mk('rect',{rx:2},g));
+      r.lb=kit.text('',0,0,{size:e.size||28,weight:e.weight||700,anchor:'middle',parent:g});r.sb=kit.text('',0,0,{size:e.subSize||22,anchor:'middle',tone:'mut',parent:g})}
+    else if(e.type==='dot'||e.type==='ring'){r.c=kit.mk('circle',{},g);r.lb=kit.text('',0,0,{size:e.size||26,weight:e.weight||600,anchor:e.type==='ring'?'middle':'start',parent:g})}
+    else if(e.type==='text'){r.t=kit.text('',0,0,{size:e.size||28,weight:e.weight||600,anchor:e.anchor||'start',parent:g})}
+    else if(e.type==='link'){r.l=kit.mk('path',{fill:'none','stroke-linecap':'round',pathLength:1,'stroke-dasharray':'1 1'},g);r.h=kit.mk('path',{},g)}
+    return r});
+  const center=(id,t)=>{const e=byId[id],s=stateAt(e,t);if(e.type==='box')return{x:s.x+s.w/2,y:s.y+s.h/2,hw:s.w/2,hh:s.h/2,a:s.a};return{x:s.x,y:s.y,hw:(s.r||10)+6,hh:(s.r||10)+6,a:s.a}};
+  const clip=(c,dx,dy)=>{const k=Math.min(dx?c.hw/Math.abs(dx):1e9,dy?c.hh/Math.abs(dy):1e9);return[c.x+dx*k,c.y+dy*k]};
+  const notes=[];B.forEach((b,i)=>{if(b.note){const x=b.note.x||1810,y=b.note.y||1020,anchor=b.note.anchor||'end';notes.push({i,big:b.note.big?kit.text(b.note.big,x,y-44,{size:b.note.size||72,weight:800,anchor,tone:b.note.tone||'warn'}):null,tx:b.note.text?kit.text(b.note.text,x,y,{size:26,anchor,tone:'mut'}):null})}});
+  const label=s=>s.v!=null?(s.pre||'')+Number(s.v).toFixed(s.d||0).replace(/\B(?=(\d{3})+(?!\d))/g,s.d?'':',')+(s.suf||''):(s.s!=null?s.s:'');
+  return{beats,draw(t){head.draw(t);
+    R.forEach(r=>{const e=r.e,s=stateAt(e,t),a=Math.max(0,s.a),tone=tv(s.tone||e.tone||'mut');
+      if(e.type==='box'){const vis=a>.001?'visible':'hidden';r.rect.setAttribute('x',s.x);r.rect.setAttribute('y',s.y);r.rect.setAttribute('width',Math.max(0,s.w));r.rect.setAttribute('height',Math.max(0,s.h));
+        r.rect.style.visibility=vis;r.rect.style.fill=tone;r.rect.style.fillOpacity=(s.fill==null?.12:s.fill);r.rect.style.stroke=tone;r.rect.style.strokeWidth=s.lw==null?2.5:s.lw;r.rect.style.opacity=a;
+        if(r.cells.length){const gp=e.gap==null?3:e.gap,cw=(s.w-gp*(e.cols+1))/e.cols,ch=(s.h-gp*(e.rows+1))/e.rows;r.cells.forEach((c,k)=>{const i=Math.floor(k/e.cols),j=k%e.cols,v=s.vals?s.vals[k]:.5;
+          c.setAttribute('x',s.x+gp+j*(cw+gp));c.setAttribute('y',s.y+gp+i*(ch+gp));c.setAttribute('width',Math.max(0,cw));c.setAttribute('height',Math.max(0,ch));c.style.visibility=vis;c.style.fill=tv(s.cellTone||s.tone||e.tone||'accent');c.style.opacity=a*(.08+.92*cl(v))})}
+        const lp=s.lp||'in',fs=+r.lb.node.getAttribute('font-size');let lx=s.x+s.w/2,ly=s.y+s.h/2+fs*.35,anc='middle';
+        if(lp==='top')ly=s.y-(s.sub?44:16);else if(lp==='bottom')ly=s.y+s.h+fs+8;else if(lp==='left'){lx=s.x-18;anc='end'}else if(lp==='right'){lx=s.x+s.w+18;anc='start'}else if(s.sub)ly-=fs*.45;
+        r.lb.node.setAttribute('text-anchor',anc);r.sb.node.setAttribute('text-anchor',anc);r.lb.move(lx,ly);r.lb.set(label(s.label!=null?{s:s.label}:{}));r.lb.tone(s.ltone||(s.tone&&s.tone!=='dim'?s.tone:'fg'));r.lb.show(a);
+        if(s.sub!=null){r.sb.move(lx,lp==='top'?s.y-14:ly+30);r.sb.set(s.sub);r.sb.show(a)}else r.sb.show(0)}
+      else if(e.type==='dot'||e.type==='ring'){r.c.setAttribute('cx',s.x);r.c.setAttribute('cy',s.y);r.c.setAttribute('r',Math.max(0,s.r||12));r.c.style.opacity=a;
+        if(e.type==='dot'){r.c.style.fill=tone;r.c.style.stroke='none'}else{r.c.style.fill=tone;r.c.style.fillOpacity=s.fill==null?.06:s.fill;r.c.style.stroke=tone;r.c.style.strokeWidth=s.lw||2.5}
+        if(s.label){r.lb.node.setAttribute('text-anchor',e.type==='ring'?'middle':s.lp==='left'?'end':'start');if(e.type==='dot')r.lb.move(s.lp==='left'?s.x-(s.r||12)-12:s.x+(s.r||12)+12,s.y+9);else r.lb.move(s.x,s.y-(s.r||12)-14);r.lb.set(s.label);r.lb.tone(s.ltone||(e.type==='dot'?'fg':(s.tone||'fg')));r.lb.show(a)}else r.lb.show(0)}
+      else if(e.type==='text'){r.t.move(s.x,s.y);r.t.node.setAttribute('font-size',s.size||e.size||28);r.t.set(label(s));r.t.tone(s.tone||'fg');r.t.show(a)}
+      else if(e.type==='link'){const A=center(s.from||e.from,t),Z=center(s.to||e.to,t);const dx=Z.x-A.x,dy=Z.y-A.y,L=Math.hypot(dx,dy)||1;const p0=clip(A,dx/L,dy/L),p1=clip(Z,-dx/L,-dy/L);
+        r.l.setAttribute('d',`M${p0[0].toFixed(1)} ${p0[1].toFixed(1)}L${p1[0].toFixed(1)} ${p1[1].toFixed(1)}`);r.l.style.stroke=tone;r.l.style.strokeWidth=s.lw||3;
+        const grow=s._new?s._p:1;r.l.setAttribute('stroke-dashoffset',1-grow);const la=a*Math.min(A.a,Z.a)>.001?a:0;r.l.style.opacity=la;r.l.style.visibility=la>0?'visible':'hidden';
+        if(s.arrow){const ux=dx/L,uy=dy/L,hx=p1[0],hy=p1[1],k=14;r.h.setAttribute('d',`M${hx} ${hy}L${hx-ux*k-uy*k*.6} ${hy-uy*k+ux*k*.6}L${hx-ux*k+uy*k*.6} ${hy-uy*k-ux*k*.6}Z`);r.h.style.fill=tone;r.h.style.opacity=grow>.95?la:0}else r.h.style.opacity=0}});
+    notes.forEach(o=>{const s=st[o.i]+.5;const nx=o.i+1<B.length?1-eo(seg(t,st[o.i+1],st[o.i+1]+.3)):1;if(o.big)o.big.show(eo(seg(t,s,s+.5))*nx);if(o.tx)o.tx.show(eo(seg(t,s+.15,s+.65))*nx)});
+  }};
+}
+
+/* 막대: 행마다 계열별 막대. 비트마다 값을 주면 길이와 숫자가 바뀜. kind:"mark"인 계열은 목표선. pick은 한 행 강조, tags는 행 오른쪽 글 */
+function bars(slide,data,kit){
+  const rows=data.rows,S=data.series,B=data.beats||[{}],max=data.max||1,dec=data.decimals==null?2:data.decimals;
+  const hasTags=B.some(b=>b.tags),T=data.top||300,Bt=data.bottom||880,LX=data.labelW||560,X0=LX+40,X1=hasTags?(data.barEnd||1240):(data.barEnd||1600);
+  const band=(Bt-T)/rows.length,bars_=S.filter(s=>s.kind!=='mark'),bh=Math.min(data.barH||54,(band*.72-(bars_.length-1)*10)/bars_.length);
+  const sc=v=>Math.max(0,v)/max*(X1-X0);
+  const els=[],bt=B.map(b=>({title:b.title,sub:b.sub,dur:b.dur,note:b.note,set:{},hide:[]}));
+  rows.forEach((r,i)=>{const y0=T+i*band+(band-(bars_.length*bh+(bars_.length-1)*10))/2;
+    els.push({id:`r${i}`,type:'text',x:110,y:y0+(r.sub?bh*.5:bh*.5+12),size:34,weight:700,s:r.label});if(r.sub)els.push({id:`rs${i}`,type:'text',x:110,y:y0+bh*.5+38,size:23,weight:500,tone:'mut',s:r.sub});
+    els.push({id:`base${i}`,type:'box',x:X0,y:y0-8,w:2,h:bars_.length*bh+(bars_.length-1)*10+16,fill:1,lw:0,tone:'dim'});
+    els.push({id:`fr${i}`,type:'box',x:96,y:T+i*band+6,w:1730,h:band-12,fill:.06,lw:2.5,tone:'accent'});
+    bars_.forEach((s,k)=>{const y=y0+k*(bh+10);els.push({id:`b${i}_${s.key}`,type:'box',x:X0,y,w:0,h:bh,fill:.85,lw:0,rx:6,tone:s.tone||'accent'});els.push({id:`v${i}_${s.key}`,type:'text',x:X0+14,y:y+bh*.5+11,size:30,weight:800,d:dec,v:0,tone:s.tone||'accent'})});
+    S.filter(s=>s.kind==='mark').forEach(s=>{els.push({id:`m${i}_${s.key}`,type:'box',x:X0,y:y0-14,w:6,h:bars_.length*bh+(bars_.length-1)*10+28,fill:1,lw:0,rx:3,tone:s.tone||'warn'});els.push({id:`ml${i}_${s.key}`,type:'text',x:X0,y:y0-24,size:22,weight:700,anchor:'middle',tone:s.tone||'warn',s:''})});
+    els.push({id:`tg${i}`,type:'text',x:1810,y:y0+(bars_.length*bh+(bars_.length-1)*10)/2+10,size:27,weight:600,anchor:'end',tone:'fg',s:''})});
+  S.forEach((s,k)=>{const x=1810-(S.length-k)*260;els.push({id:`lgd${k}`,type:'box',x,y:166,w:s.kind==='mark'?6:26,h:26,fill:1,lw:0,rx:s.kind==='mark'?3:5,tone:s.tone||(s.kind==='mark'?'warn':'accent')});els.push({id:`lgt${k}`,type:'text',x:x+40,y:188,size:24,weight:500,tone:'mut',s:s.label})});
+  let shown=new Set();const markAt={};
+  B.forEach((b,bi)=>{const set=bt[bi].set;
+    if(bi===0){rows.forEach((r,i)=>{set[`r${i}`]={};if(r.sub)set[`rs${i}`]={};set[`base${i}`]={a:.8}})}
+    Object.entries(b.values||{}).forEach(([key,vals])=>{const s=S.find(x=>x.key===key);if(!s)return;const k=S.indexOf(s);if(!shown.has(key)){set[`lgd${k}`]={};set[`lgt${k}`]={};shown.add(key)}
+      vals.forEach((v,i)=>{if(v==null)return;if(s.kind==='mark'){markAt[i]=v;set[`m${i}_${key}`]={x:X0+sc(v)-3};set[`ml${i}_${key}`]={x:X0+sc(v),s:s.markLabel||label(v)}}else{set[`b${i}_${key}`]={w:sc(v)};const mk=markAt[i]!=null&&markAt[i]>v&&sc(markAt[i])-sc(v)<110?sc(markAt[i])+6:sc(v);set[`v${i}_${key}`]={x:X0+mk+14,v}}})});
+    if(b.pick!=null){rows.forEach((r,i)=>{const on=i===b.pick;set[`r${i}`]=Object.assign(set[`r${i}`]||{},{a:on?1:.35,tone:on?'warn':'fg'});if(r.sub)set[`rs${i}`]={a:on?1:.35};bars_.forEach(s=>{set[`b${i}_${s.key}`]=Object.assign(set[`b${i}_${s.key}`]||{},{a:on?1:.3});set[`v${i}_${s.key}`]=Object.assign(set[`v${i}_${s.key}`]||{},{a:on?1:.35})})});set[`fr${b.pick}`]={a:1};const pp=B.slice(0,bi).reverse().find(x=>x.pick!=null);if(pp&&pp.pick!==b.pick&&B[bi-1].pick!=null)bt[bi].hide.push(`fr${pp.pick}`)}
+    else if(bi>0&&B[bi-1].pick!=null){rows.forEach((r,i)=>{set[`r${i}`]=Object.assign(set[`r${i}`]||{},{a:1,tone:'fg'});if(r.sub)set[`rs${i}`]={a:1};bars_.forEach(s=>{set[`b${i}_${s.key}`]=Object.assign(set[`b${i}_${s.key}`]||{},{a:1});set[`v${i}_${s.key}`]=Object.assign(set[`v${i}_${s.key}`]||{},{a:1})})});bt[bi].hide.push(`fr${B[bi-1].pick}`)}
+    if(b.tags)b.tags.forEach((s,i)=>{if(s==null||s==='')bt[bi].hide.push(`tg${i}`);else set[`tg${i}`]={s,a:1}});
+    if(b.hide)b.hide.forEach(key=>rows.forEach((r,i)=>bt[bi].hide.push(`b${i}_${key}`,`v${i}_${key}`,`m${i}_${key}`,`ml${i}_${key}`)))});
+  els.push(...(data.els||[]));B.forEach((b,bi)=>{Object.assign(bt[bi].set,b.set||{});if(b.hideEls)bt[bi].hide.push(...b.hideEls)});
+  function label(v){return Number(v).toFixed(dec)}
+  return morph(slide,Object.assign({},data,{els,beats:bt,move:data.move||1.1}),kit);
+}
+
+/* 공간: 점이 2차원 평면 위에서 옮겨 다님. 비트마다 pos(0~1 좌표), links, rings(묶음 원), hide */
+function space(slide,data,kit){
+  const ar=data.area||[110,290,1810,930],[x0,y0,x1,y1]=ar,P=(u,v)=>[x0+u*(x1-x0),y0+v*(y1-y0)];
+  const pts=data.points||[],B=data.beats||[{}];const els=[];
+  if(data.frame!==false)els.push({id:'_frame',type:'box',x:x0-30,y:y0-30,w:x1-x0+60,h:y1-y0+60,fill:0,lw:2,tone:'dim',rx:18});
+  pts.forEach(p=>els.push({id:p.id,type:'dot',r:p.r||14,label:p.label,lp:p.lp,tone:p.tone||'accent',size:p.size||26}));
+  const ringIds=new Set(),linkIds=new Set();
+  B.forEach(b=>{(b.rings||[]).forEach(r=>{if(!ringIds.has(r.id)){ringIds.add(r.id);els.push({id:r.id,type:'ring',tone:r.tone||'dim',size:26})}});(b.links||[]).forEach(l=>{const id=l.id||`${l.from}>${l.to}`;if(!linkIds.has(id)){linkIds.add(id);els.push({id,type:'link',from:l.from,to:l.to,tone:l.tone||'mut',arrow:!!l.arrow,lw:l.w||3})}})});
+  const bt=B.map((b,bi)=>{const set={};if(bi===0&&data.frame!==false)set._frame={a:.5};
+    Object.entries(b.pos||{}).forEach(([id,[u,v]])=>{const[x,y]=P(u,v);set[id]=Object.assign({x,y},b.tones&&b.tones[id]?{tone:b.tones[id]}:{})});
+    Object.entries(b.tones||{}).forEach(([id,tone])=>{if(!set[id])set[id]={tone}});
+    (b.rings||[]).forEach(r=>{const[x,y]=P(r.at[0],r.at[1]);set[r.id]={x,y,r:r.r*(x1-x0),label:r.label,tone:r.tone||'dim'}});
+    (b.links||[]).forEach(l=>{set[l.id||`${l.from}>${l.to}`]=Object.assign({},l.tone?{tone:l.tone}:{})});
+    Object.assign(set,b.set||{});return{title:b.title,sub:b.sub,dur:b.dur,note:b.note,set,hide:b.hide||[],stagger:b.stagger}});
+  els.push(...(data.els||[]));
+  return morph(slide,Object.assign({},data,{els,beats:bt,move:data.move||1.2}),kit);
+}
+
+const SCENES={timeline,map,flow,cards,dots,morph,bars,space};
 
 /* 런타임: 슬라이드와 비트 이동, 시간 탐색, 검사 */
 function init(){
