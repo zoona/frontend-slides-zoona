@@ -291,7 +291,67 @@ function space(slide,data,kit){
   return morph(slide,Object.assign({},data,{els,beats:bt,move:data.move||1.2}),kit);
 }
 
-const SCENES={timeline,map,flow,cards,dots,morph,bars,space};
+/* 입체: 3D 좌표 요소를 카메라로 투영해 그림. 비트마다 cam과 요소 상태를 보간(morph와 같은 set, hide 규칙).
+   깊이가 뜻을 가질 때만 씀(층 쌓기, 텐서 모양). 글자는 기울이지 않고 투영된 자리에 화면 기준으로 세움.
+   요소: sheet(격자 판, z 위치의 XY 평면), dot(점), line(x,y,z에서 x2,y2,z2까지), text(화면 좌표, world:true면 3D 위치에).
+   cam: yaw, pitch(도), zoom, ox, oy(화면 중심), cx, cy, cz(회전 중심), f(원근 거리). */
+const NUM3=['x','y','z','x2','y2','z2','w','h','r','fill','v','a','size','lw','cellA','rowA'];
+function solid(slide,data,kit){
+  const B=data.beats&&data.beats.length?data.beats:[{}];
+  const beats=B.map((b,i)=>b.dur||(i===0?2.4:2.6));const st=starts(beats),head=Head(kit,Object.assign({},data,{beats:B}),st);
+  const mv=data.move||1.2,bAt=t=>{let b=0;while(b+1<B.length&&t>=st[b+1])b++;return b};
+  const CAM=[];let cc=Object.assign({yaw:0,pitch:0,zoom:1,ox:960,oy:600,cx:0,cy:0,cz:0,f:2600},data.cam||{});B.forEach(b=>{cc=Object.assign({},cc,b.cam||{});CAM.push(cc)});
+  const camAt=t=>{const b=bAt(t),to=CAM[b],from=b?CAM[b-1]:to,p=eio(seg(t,st[b],st[b]+(B[b].camMove||mv*1.4)));const o={};for(const k in to)o[k]=lerp(from[k],to[k],p);return o};
+  const EL=(data.els||[]).map((e,i)=>Object.assign({i},e));
+  EL.forEach(e=>{let cur=Object.assign({a:0},e);e.S=[];e.D=[];
+    B.forEach(b=>{const set=b.set&&b.set[e.id];const prev=cur;let d=0;
+      if(set){const keys=Object.keys(b.set);d=set._d!=null?set._d:Math.min(1.2,keys.indexOf(e.id)*(b.stagger==null?.04:b.stagger));cur=Object.assign({},cur,set);if(set.a==null&&prev.a===0)cur.a=1}
+      if((b.hide||[]).includes(e.id))cur=Object.assign({},cur,{a:0});
+      e.S.push(Object.assign({},cur));e.D.push(d)})});
+  const stateAt=(e,t)=>{const b=bAt(t);const to=e.S[b];let from=b?e.S[b-1]:Object.assign({},e.S[0],{a:0});if(from.a===0)from=Object.assign({},to,{a:0});
+    const p=eio(seg(t,st[b]+e.D[b],st[b]+e.D[b]+mv));const o={};for(const k in to){const A=from[k],Z=to[k];
+      if(NUM3.includes(k)&&typeof Z==='number'&&typeof A==='number')o[k]=lerp(A,Z,p);
+      else if(k==='vals'&&Array.isArray(Z))o[k]=Z.map((z,j)=>lerp(A&&A[j]!=null?A[j]:z,z,p));
+      else o[k]=p<.5&&A!==undefined?A:Z}return o};
+  const proj=(c,x,y,z)=>{x-=c.cx;y-=c.cy;z-=c.cz;const ya=c.yaw*Math.PI/180,pa=c.pitch*Math.PI/180;
+    const X=x*Math.cos(ya)+z*Math.sin(ya);let Z=-x*Math.sin(ya)+z*Math.cos(ya);const Y=y*Math.cos(pa)-Z*Math.sin(pa);Z=y*Math.sin(pa)+Z*Math.cos(pa);
+    const s=c.f/(c.f+Z)*c.zoom;return[c.ox+X*s,c.oy+Y*s,Z]};
+  const P=pts=>pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
+  const body=kit.group({}),top=kit.group({});
+  const R=EL.map(e=>{const r={e};
+    if(e.type==='sheet'){r.g=kit.mk('g',{},body);r.poly=kit.mk('polygon',{'stroke-linejoin':'round'},r.g);r.cells=[];const n=(e.rows||0)*(e.cols||0);for(let k=0;k<n;k++)r.cells.push(kit.mk('polygon',{},r.g));
+      r.lb=kit.text('',0,0,{size:e.size||26,weight:e.weight||700,parent:top});r.rl=(e.rowLabels||[]).map(s=>kit.text(s,0,0,{size:e.rowSize||26,weight:600,anchor:'end',parent:top}))}
+    else if(e.type==='dot'){r.g=kit.mk('g',{},body);r.c=kit.mk('circle',{},r.g);r.lb=kit.text('',0,0,{size:e.size||24,weight:600,parent:top})}
+    else if(e.type==='line'){r.g=kit.mk('g',{},body);r.l=kit.mk('path',{fill:'none','stroke-linecap':'round'},r.g);r.h=kit.mk('path',{},r.g);r.lb=kit.text('',0,0,{size:e.size||24,weight:600,parent:top})}
+    else if(e.type==='text'){r.t=kit.text('',0,0,{size:e.size||26,weight:e.weight||600,anchor:e.anchor||'start',parent:top})}
+    return r});
+  const notes=[];B.forEach((b,i)=>{if(b.note){const x=b.note.x||1810,y=b.note.y||1020,anchor=b.note.anchor||'end';notes.push({i,big:b.note.big?kit.text(b.note.big,x,y-44,{size:b.note.size||72,weight:800,anchor,tone:b.note.tone||'warn'}):null,tx:b.note.text?kit.text(b.note.text,x,y,{size:26,anchor,tone:'mut'}):null})}});
+  let order='';
+  const place=(t,anchor,x,y,lp,fs)=>{if(lp==='left'){t.node.setAttribute('text-anchor','end');t.move(x-16,y+fs*.35)}else if(lp==='right'){t.node.setAttribute('text-anchor','start');t.move(x+16,y+fs*.35)}else if(lp==='bottom'){t.node.setAttribute('text-anchor','middle');t.move(x,y+fs+12)}else{t.node.setAttribute('text-anchor','middle');t.move(x,y-24)}};
+  return{beats,draw(t){head.draw(t);const c=camAt(t);const zs=[];
+    R.forEach(r=>{const e=r.e,s=stateAt(e,t),a=Math.max(0,s.a),tone=tv(s.tone||e.tone||'mut'),vis=a>.001?'visible':'hidden';
+      if(e.type==='sheet'){const x=s.x,y=s.y,z=s.z||0,w=s.w,h=s.h;const q=[proj(c,x,y,z),proj(c,x+w,y,z),proj(c,x+w,y+h,z),proj(c,x,y+h,z)];
+        r.poly.setAttribute('points',P(q));r.poly.style.fill=tone;r.poly.style.fillOpacity=s.fill==null?.08:s.fill;r.poly.style.stroke=tone;r.poly.style.strokeWidth=s.lw==null?2:s.lw;r.g.style.opacity=a;r.g.style.visibility=vis;
+        if(r.cells.length&&a>.001){const gp=e.gap==null?3:e.gap,cw=(w-gp*(e.cols+1))/e.cols,ch=(h-gp*(e.rows+1))/e.rows,ct=tv(s.cellTone||e.cellTone||'accent');
+          r.cells.forEach((cel,k)=>{const i=Math.floor(k/e.cols),j=k%e.cols,cx=x+gp+j*(cw+gp),cy=y+gp+i*(ch+gp),v=s.vals?s.vals[k]:.5;
+            cel.setAttribute('points',P([proj(c,cx,cy,z),proj(c,cx+cw,cy,z),proj(c,cx+cw,cy+ch,z),proj(c,cx,cy+ch,z)]));cel.style.fill=ct;cel.style.opacity=(s.cellA==null?1:s.cellA)*(.08+.92*cl(v))})}
+        zs.push([r,(q[0][2]+q[2][2])/2]);
+        const lp=s.lp||'top',fs=e.size||26;const an=lp==='left'?[(q[0][0]+q[3][0])/2,(q[0][1]+q[3][1])/2]:lp==='right'?[(q[1][0]+q[2][0])/2,(q[1][1]+q[2][1])/2]:lp==='bottom'?[(q[2][0]+q[3][0])/2,Math.max(q[2][1],q[3][1])]:[(q[0][0]+q[1][0])/2,Math.min(q[0][1],q[1][1])];
+        if(s.label){place(r.lb,null,an[0],an[1],lp,fs);r.lb.set(s.label);r.lb.tone(s.ltone||s.tone||'fg');r.lb.show(a)}else r.lb.show(0);
+        r.rl.forEach((tx,i)=>{const yy=y+(h/e.rows)*(i+.5),p=proj(c,x,yy,z);tx.move(p[0]-14,p[1]+9);tx.show(a*(s.rowA==null?1:s.rowA))})}
+      else if(e.type==='dot'){const p=proj(c,s.x,s.y,s.z||0),k=c.f/(c.f+p[2])*c.zoom;r.c.setAttribute('cx',p[0]);r.c.setAttribute('cy',p[1]);r.c.setAttribute('r',Math.max(0,(s.r||12)*k));r.c.style.fill=tone;r.g.style.opacity=a;zs.push([r,p[2]]);
+        if(s.label){place(r.lb,null,p[0]+(s.lp==='left'?-(s.r||12):(s.r||12)),p[1],s.lp||'right',e.size||24);r.lb.set(s.label);r.lb.tone(s.ltone||'fg');r.lb.show(a)}else r.lb.show(0)}
+      else if(e.type==='line'){const p0=proj(c,s.x,s.y,s.z||0),p1=proj(c,s.x2,s.y2,s.z2||0);r.l.setAttribute('d',`M${p0[0].toFixed(1)} ${p0[1].toFixed(1)}L${p1[0].toFixed(1)} ${p1[1].toFixed(1)}`);r.l.style.stroke=tone;r.l.style.strokeWidth=s.lw||2.5;if(s.dash)r.l.setAttribute('stroke-dasharray',s.dash);r.g.style.opacity=a;r.g.style.visibility=vis;zs.push([r,Math.min(p0[2],p1[2])-1]);
+        if(s.arrow){const dx=p1[0]-p0[0],dy=p1[1]-p0[1],L=Math.hypot(dx,dy)||1,ux=dx/L,uy=dy/L,k=16;r.h.setAttribute('d',`M${p1[0]} ${p1[1]}L${p1[0]-ux*k-uy*k*.6} ${p1[1]-uy*k+ux*k*.6}L${p1[0]-ux*k+uy*k*.6} ${p1[1]-uy*k-ux*k*.6}Z`);r.h.style.fill=tone}else r.h.setAttribute('d','');
+        if(s.label){const at=s.lat==null?1:s.lat,lx=lerp(p0[0],p1[0],at),ly=lerp(p0[1],p1[1],at);place(r.lb,null,lx,ly,s.lp||'right',e.size||24);r.lb.set(s.label);r.lb.tone(s.ltone||s.tone||'fg');r.lb.show(a)}else r.lb.show(0)}
+      else if(e.type==='text'){let x=s.x,y=s.y;if(s.world){const p=proj(c,s.x,s.y,s.z||0);x=p[0];y=p[1]}r.t.move(x,y);r.t.node.setAttribute('font-size',s.size||e.size||26);
+        r.t.set(s.v!=null?(s.pre||'')+Number(s.v).toFixed(s.d||0)+(s.suf||''):(s.s||''));r.t.tone(s.tone||'fg');r.t.show(a)}});
+    zs.sort((p,q)=>q[1]-p[1]);const key=zs.map(z=>z[0].e.i).join(',');if(key!==order){order=key;zs.forEach(z=>body.appendChild(z[0].g))}
+    notes.forEach(o=>{const s=st[o.i]+.5;const nx=o.i+1<B.length?1-eo(seg(t,st[o.i+1],st[o.i+1]+.3)):1;if(o.big)o.big.show(eo(seg(t,s,s+.5))*nx);if(o.tx)o.tx.show(eo(seg(t,s+.15,s+.65))*nx)});
+  }};
+}
+
+const SCENES={timeline,map,flow,cards,dots,morph,bars,space,solid};
 
 /* 런타임: 슬라이드와 비트 이동, 시간 탐색, 검사 */
 function init(){
