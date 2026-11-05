@@ -147,6 +147,54 @@ img, svg, video { display: block; max-width: 100%; }
 .deck-help-hint { margin-top: 16px; font-size: 11px; color: var(--muted, #999);
   text-align: center; letter-spacing: .06em; }
 
+/* === DECK NAV — progress bar, slide counter, table of contents (G) ======= */
+/* Built by the bootstrap. Bar and counter live INSIDE the stage (scale with it);
+   the TOC is an off-stage overlay like the help card. Hidden in capture/print. */
+.deck-nav { position: absolute; inset: auto 0 0 0; height: 0; z-index: 50; pointer-events: none; }
+.deck-nav-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 6px; pointer-events: auto; cursor: pointer;
+  background: color-mix(in srgb, var(--fg, var(--text-primary, #fff)) 10%, transparent); }
+.deck-nav-bar i { position: absolute; left: 0; top: 0; bottom: 0; width: 0;
+  background: var(--accent, #e0a53f); transition: width .35s ease; }
+.deck-nav-bar b { position: absolute; top: 0; bottom: 0; width: 2px;
+  background: var(--bg, var(--bg-primary, #000)); opacity: .7; }
+.deck-nav-num { position: absolute; left: 26px; bottom: 16px; pointer-events: auto; cursor: pointer;
+  display: flex; align-items: center; gap: 10px; padding: 6px 12px; border-radius: 10px;
+  background: transparent; border: 0; opacity: .45; transition: opacity .25s ease;
+  font: 600 20px/1 var(--font-body, system-ui, sans-serif); font-variant-numeric: tabular-nums;
+  color: var(--muted, var(--text-secondary, #999)); }
+.deck-nav-num:hover, .deck-nav.flash .deck-nav-num { opacity: 1; }
+.deck-nav-num .bt { display: flex; gap: 5px; }
+.deck-nav-num .bt i { width: 8px; height: 8px; border-radius: 50%;
+  background: currentColor; opacity: .35; }
+.deck-nav-num .bt i.on { opacity: 1; background: var(--accent, #e0a53f); }
+.deck-nav-num .go { color: var(--accent, #e0a53f); }
+html.dm-capture .deck-nav { display: none; }
+@media print { .deck-nav, .deck-toc, .deck-help { display: none !important; } }
+
+.deck-toc { position: fixed; inset: 0; z-index: 10000; display: none;
+  align-items: center; justify-content: center;
+  background: rgba(0,0,0,.55); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.deck-toc.open { display: flex; }
+.deck-toc-card { width: min(1100px, 92vw); max-height: 86vh; overflow: auto;
+  background: var(--bg-2, var(--bg-primary, #1a1a1a)); color: var(--fg, var(--text-primary, #fff));
+  border: 1px solid var(--line, rgba(128,128,128,.3)); border-radius: 20px;
+  padding: 28px 30px; box-shadow: 0 30px 80px rgba(0,0,0,.5);
+  font-family: var(--font-body, system-ui, sans-serif); }
+.deck-toc-card h2 { margin: 0 0 14px; font-size: 14px; letter-spacing: .24em;
+  color: var(--accent, #e0a53f); }
+.deck-toc-card ol { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr;
+  grid-auto-flow: column; align-content: start; gap: 2px 28px; }
+.deck-toc-card ol.two { grid-template-columns: 1fr 1fr; }
+.deck-toc-card li { display: grid; align-content: start; grid-template-columns: 34px 1fr; gap: 2px 10px;
+  padding: 9px 10px; border-radius: 10px; cursor: pointer; }
+.deck-toc-card li:hover, .deck-toc-card li.sel { background: color-mix(in srgb, var(--accent, #e0a53f) 16%, transparent); }
+.deck-toc-card li.cur .n, .deck-toc-card li.cur .t { color: var(--accent, #e0a53f); }
+.deck-toc-card li .n { grid-row: span 2; font: 700 15px/1.5 ui-monospace, monospace;
+  color: var(--muted, var(--text-secondary, #999)); text-align: right; }
+.deck-toc-card li .s { font-size: 12px; color: var(--muted, var(--text-secondary, #999)); }
+.deck-toc-card li .t { font-size: 16px; font-weight: 600; line-height: 1.35; }
+.deck-toc-card .deck-help-hint { font-family: inherit; }
+
 /* ============================================================================
    DECK BOOTSTRAP SCRIPT  —  paste into the deck's <script> (REQUIRED)
    ----------------------------------------------------------------------------
@@ -173,12 +221,15 @@ img, svg, video { display: block; max-width: 100%; }
        i = (n + slides.length) % slides.length;
        slides.forEach(function (s, k) { s.classList.toggle('active', k === i); });
        document.documentElement.style.setProperty('--slide', i); // optional hook
+       if (window.deckNav) window.deckNav.update(i, 0, 1);
      }
 
      // --- HELP OVERLAY (H / ?) — built here so EVERY deck has it ---
      var sections = [{ title: '', rows: [
        ['←  →  Space', '슬라이드 이동'],
        ['Home  End', '처음 / 끝'],
+       ['G', '목차 열기 / 닫기'],
+       ['숫자 Enter', '그 번호 장으로 이동'],
        ['H  ?', '도움말 열기 / 닫기']
      ] }];
      var help = document.createElement('div');
@@ -203,6 +254,102 @@ img, svg, video { display: block; max-width: 100%; }
      document.body.appendChild(help);
      // add-on hook: theme switcher etc. append their shortcut sections here
      window.deckHelp = { addSection: function (title, rows) { sections.push({ title: title, rows: rows }); render(); }, toggle: toggleHelp };
+
+
+     // --- NAV: progress bar + counter (in stage) and table of contents (G) ---
+     // Titles: data-title > motion JSON title > first beat title > first heading.
+     // Sections: data-section > motion JSON kicker. Motion runtime takes over via
+     // deckNav.setGo(fn) and calls deckNav.update(slide, beat, beats).
+     function meta(s) {
+       var j = s.querySelector('script[type="application/json"]'), d = {};
+       if (j) { try { d = JSON.parse(j.textContent); } catch (err) { d = {}; } }
+       var bt = (d.beats || []).filter(function (b) { return b && b.title; })[0];
+       var h = s.querySelector('h1, h2, h3');
+       return { title: s.dataset.title || d.title || (bt && bt.title) || (h && h.textContent.trim()) || '',
+                section: s.dataset.section || d.kicker || '' };
+     }
+     var metas = slides.map(meta), N = slides.length, navCur = 0, goFn = function (n) { show(n); };
+     var nav = document.createElement('div');
+     nav.className = 'deck-nav';
+     nav.innerHTML = '<div class="deck-nav-bar"><i></i></div><button class="deck-nav-num" type="button" title="목차 (G)"></button>';
+     stage.appendChild(nav);
+     var bar = nav.querySelector('.deck-nav-bar'), fillEl = bar.querySelector('i'), num = nav.querySelector('.deck-nav-num');
+     for (var t = 1; t < N; t++) { var tick = document.createElement('b'); tick.style.left = (t / N * 100) + '%'; bar.appendChild(tick); }
+     var toc = document.createElement('div');
+     toc.className = 'deck-toc';
+     toc.innerHTML = '<div class="deck-toc-card"><h2>목차</h2><ol' + (N > 12 ? ' class="two"' : '') +
+       ' style="grid-template-rows: repeat(' + (N > 12 ? Math.ceil(N / 2) : N) + ', auto)">' +
+       metas.map(function (m, k) {
+         return '<li data-n="' + k + '"><span class="n">' + (k + 1) + '</span>' +
+                (m.section ? '<span class="s">' + esc(m.section) + '</span>' : '') +
+                '<span class="t">' + esc(m.title || ('슬라이드 ' + (k + 1))) + '</span></li>';
+       }).join('') +
+       '</ol><div class="deck-help-hint">클릭, 또는 ↑ ↓ 고르고 Enter로 이동. G, Esc로 닫기</div></div>';
+     document.body.appendChild(toc);
+     var items = Array.prototype.slice.call(toc.querySelectorAll('li')), sel = 0;
+     function mark() { items.forEach(function (li, k) { li.classList.toggle('cur', k === navCur); li.classList.toggle('sel', k === sel); }); }
+     function tocOpen() { return toc.classList.contains('open'); }
+     function toggleToc(force) {
+       var o = force == null ? !tocOpen() : force;
+       toc.classList.toggle('open', o);
+       if (o) { sel = navCur; mark(); items[sel].scrollIntoView({ block: 'nearest' }); }
+     }
+     function jump(n) { if (n >= 0 && n < N) { toggleToc(false); goFn(n); } }
+     toc.addEventListener('click', function (e) {
+       var li = e.target.closest('li');
+       if (li) jump(+li.dataset.n); else if (e.target === toc) toggleToc(false);
+     });
+     num.addEventListener('click', function (e) { e.stopPropagation(); toggleToc(); });
+     bar.addEventListener('click', function (e) {
+       e.stopPropagation();
+       var r = bar.getBoundingClientRect();
+       jump(Math.min(N - 1, Math.floor((e.clientX - r.left) / r.width * N)));
+     });
+     var typed = '', typedT = null, flashT = null;
+     function paintNum(beat, beats) {
+       var dots = '';
+       if (beats > 1) { dots = '<span class="bt">'; for (var b = 0; b < beats; b++) dots += '<i' + (b <= beat ? ' class="on"' : '') + '></i>'; dots += '</span>'; }
+       num.innerHTML = (typed ? '<span class="go">' + typed + '로 이동</span>' : '<span>' + (navCur + 1) + ' / ' + N + '</span>') + dots;
+     }
+     var lastBeat = 0, lastBeats = 1;
+     function update(n, beat, beats) {
+       var changed = n !== navCur;
+       navCur = n; lastBeat = beat || 0; lastBeats = beats || 1;
+       fillEl.style.width = ((n + (lastBeat + 1) / lastBeats) / N * 100) + '%';
+       paintNum(lastBeat, lastBeats); mark();
+       if (changed) { nav.classList.add('flash'); clearTimeout(flashT); flashT = setTimeout(function () { nav.classList.remove('flash'); }, 1600); }
+     }
+     window.deckNav = {
+       update: update, isOpen: tocOpen, toggle: toggleToc, count: N, titles: metas,
+       go: function (n) { jump(n); },
+       setGo: function (fn) { goFn = fn; }
+     };
+     // digits + Enter jump; while the TOC is open, arrows move the selection.
+     // Capture phase so it runs before the motion runtime's own key handler.
+     window.addEventListener('keydown', function (e) {
+       var tn = e.target && e.target.tagName;
+       if (tn && /^(INPUT|SELECT|TEXTAREA)$/.test(tn)) return;
+       if (e.altKey || e.metaKey || e.ctrlKey) return;
+       var k = e.key, stop = function () { e.preventDefault(); e.stopImmediatePropagation(); };
+       if (k === 'g' || k === 'G') { stop(); toggleHelp(false); toggleToc(); return; }
+       if (/^[0-9]$/.test(k)) {
+         stop(); typed = (typed + k).slice(-3); paintNum(lastBeat, lastBeats); nav.classList.add('flash');
+         clearTimeout(typedT); typedT = setTimeout(function () { typed = ''; paintNum(lastBeat, lastBeats); nav.classList.remove('flash'); }, 2500);
+         return;
+       }
+       if (k === 'Enter' && typed) { stop(); var n = parseInt(typed, 10) - 1; typed = ''; clearTimeout(typedT); jump(n); paintNum(lastBeat, lastBeats); return; }
+       if (!tocOpen()) return;
+       if (k === 'Escape') { stop(); toggleToc(false); return; }
+       var cols = N > 12 ? Math.ceil(N / 2) : N;
+       if (k === 'ArrowDown') { stop(); sel = Math.min(N - 1, sel + 1); }
+       else if (k === 'ArrowUp') { stop(); sel = Math.max(0, sel - 1); }
+       else if (k === 'ArrowRight') { stop(); sel = Math.min(N - 1, sel + cols); }
+       else if (k === 'ArrowLeft') { stop(); sel = Math.max(0, sel - cols); }
+       else if (k === 'Enter') { stop(); jump(sel); return; }
+       else if (k === ' ' || k === 'PageDown' || k === 'PageUp' || k === 'Home' || k === 'End') { stop(); return; }
+       else return;
+       mark(); items[sel].scrollIntoView({ block: 'nearest' });
+     }, true);
 
      window.addEventListener('resize', fit);
      fit();

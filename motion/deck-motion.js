@@ -303,6 +303,8 @@ function init(){
   const stops=[];S.forEach((s,i)=>s.ends.forEach((t,b)=>stops.push({slide:i,beat:b,t})));
   let cur=-1,si=0,T=0,target=0,raf=null,last=0;
   const setHash=()=>{const st=stops[cur];if(st)try{history.replaceState(null,'',`#${st.slide+1}.${st.beat+1}`)}catch(e){}};
+  const navUpdate=()=>{const st=stops[cur];if(st&&global.deckNav)global.deckNav.update(st.slide,st.beat,S[st.slide].beats.length)};
+  if(global.deckNav)global.deckNav.setGo(i=>{const n=stops.findIndex(s=>s.slide===i);if(n>=0)goStop(n)});
   function activate(i){if(si===i&&S[i].el.classList.contains('active'))return;si=i;S.forEach((s,k)=>s.el.classList.toggle('active',k===i));document.documentElement.style.setProperty('--slide',i)}
   const paint=()=>S[si].draw(T);
   function stopAnim(){if(raf){cancelAnimationFrame(raf);raf=null}}
@@ -310,7 +312,7 @@ function init(){
   function run(){if(reduced||S[si].dur===0){T=target;paint();return}if(!raf){last=performance.now();raf=requestAnimationFrame(tick)}}
   function goStop(n,instant){if(n<0||n>=stops.length)return;const st=stops[n],prev=stops[cur];cur=n;
     if(!prev||st.slide!==prev.slide){stopAnim();activate(st.slide);const forward=!prev||st.slide>prev.slide;T=forward&&!instant&&st.beat===0?0:st.t;target=st.t;if(instant||!forward)T=st.t;paint();if(T!==target)run()}
-    else{target=st.t;if(instant){stopAnim();T=target;paint()}else run()}setHash()}
+    else{target=st.t;if(instant){stopAnim();T=target;paint()}else run()}setHash();navUpdate()}
   const next=()=>goStop(cur+1),prev=()=>goStop(cur-1);
   addEventListener('keydown',e=>{if(e.metaKey||e.ctrlKey||e.altKey)return;const k=e.key;
     if(k==='ArrowRight'||k===' '||k==='PageDown'){e.preventDefault();e.stopImmediatePropagation();next()}

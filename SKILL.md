@@ -82,7 +82,7 @@ description: HTML 발표자료를 처음부터 만드는 스킬 — 고정 16:9 
 - `prefers-reduced-motion` 지원.
 - CSS 함수 직접 부호반전 금지(`-clamp()` 등은 무시됨) → `calc(-1 * clamp(...))`.
 
-**생성 시 `viewport-base.css`를 읽어 전체를 덱의 `<style>`에 삽입**하고, 파일 하단 주석의 **DECK BOOTSTRAP SCRIPT**(균일 스케일 + 방향키/스페이스/스와이프)를 덱 `<script>`에 붙인다. 없으면 `--deck-scale`이 1로 고정돼 스테이지가 넘친다.
+**생성 시 `viewport-base.css`를 읽어 전체를 덱의 `<style>`에 삽입**하고, 파일 하단 주석의 **DECK BOOTSTRAP SCRIPT**(균일 스케일 + 방향키/스페이스/스와이프 + 진행 막대, 장 번호, 목차)를 덱 `<script>`에 붙인다. 없으면 `--deck-scale`이 1로 고정돼 스테이지가 넘친다.
 
 ### Content Density Modes
 
@@ -220,6 +220,7 @@ Phase 1 콘텐츠 + Phase 2 스타일로 풀 덱 생성. 이미지가 없으면 
 3. 사용자에게 안내:
    - 파일 위치, 스타일명, 슬라이드 수
    - 내비게이션: 방향키/스페이스/스와이프
+   - **위치와 이동**: 스테이지 하단 진행 막대(장 구분 눈금, 모션 장면은 비트까지 반영, 클릭하면 그 위치로), 왼쪽 아래 장 번호(비트 점 포함, 클릭하면 목차), `G` 목차, 숫자 입력 후 `Enter`로 그 장으로. 목차 제목은 `data-title` > 모션 JSON `title` > 첫 비트 title > 첫 h1~h3 순, 소제목은 `data-section` > JSON `kicker`. 캡처(`dm-capture`)와 인쇄에서는 숨김
    - **도움말**: `H` 또는 `?` — 모든 덱에 기본 포함 (viewport-base.css 부트스트랩이 생성). 현재 덱의 단축키를 오버레이로 보여줌
    - 커스터마이즈: `:root` CSS 변수(색), 폰트 링크(타입), `.reveal`(애니메이션)
    - **Refinement Mode**: "문구·구조·디자인·톤 변경은 한꺼번에 리스트로 모아 주시면 Round 단위로 한 번에 처리합니다." ([REFINEMENT_MODE.md](REFINEMENT_MODE.md))
