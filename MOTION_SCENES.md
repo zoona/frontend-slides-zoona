@@ -136,7 +136,27 @@
 
 `DeckMotion.register('name',(slide,data,kit)=>({beats:[초...],draw(t){...}}))`. 규칙은 하나: `draw(t)`는 `t`만 보고 그린다. `Date.now`, `requestAnimationFrame`, 시드 없는 난수 금지. 글자와 선은 `kit.text`, `kit.line`으로 만들고 캔버스는 점 수백 개 이상일 때만 쓴다.
 
+## 글자 길이 한계
+
+장면마다 글자 자리가 고정돼 있어 길면 겹친다. 검사가 잡지만, 처음부터 아래 안에서 쓴다.
+
+| 자리 | 한계 | 이유 |
+|---|---|---|
+| `sub`와 비트 `sub` (범례가 있는 timeline, map, bars) | 30자 안팎 | 범례가 제목 줄 오른쪽(x 1010 이후)에 그려져 긴 부제와 겹침 |
+| timeline `groups[].name` | 4자 | 범례와 재배열 행 이름이 건수 숫자와 겹침 |
+| map `levels[].label` | 4자 | 범례 라벨 오른쪽 100px에 건수가 붙음 |
+| cards 한 줄 | 4장까지, 카드당 제목 한 줄과 본문 3줄 | 5장이면 칸이 좁아 단어가 끊김 |
+| flow 선 | 이웃 열끼리 | 열을 건너뛰는 선은 가운데 노드를 가로지름 |
+
 ## 검증과 출력
+
+보여 주기 전 점검(gstack 없이, Chrome만):
+```bash
+node scripts/motion-check.mjs <덱.html 절대경로> <출력 폴더>   # NN-장.비트.png, check.json, sheet.png
+```
+검사 0건이어도 `sheet.png`(멈춤 지점 전부를 한 장에 모음)를 눈으로 본다. 문제가 있으면 종료 코드 1.
+
+PDF와 영상까지:
 
 ```bash
 scripts/motion-capture.sh <덱 URL> <출력 폴더> --pdf 덱.pdf --video 덱.mp4 --fps 30
