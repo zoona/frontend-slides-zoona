@@ -24,8 +24,9 @@ echo "멈춤 지점 ${N}장: $OUT/stops"
 if [ -n "$PDF" ]; then
   W=${SIZE%x*}; H=${SIZE#*x}; PAGE="$OUT/stops/pages.html"
   { echo "<!doctype html><style>@page{size:${W}px ${H}px;margin:0}body{margin:0}img{display:block;width:${W}px;height:${H}px;break-after:page}</style>"; for f in "$OUT"/stops/*.png; do echo "<img src=\"$(basename "$f")\">"; done; } > "$PAGE"
-  (cd "$OUT/stops" && python3 -m http.server 4399 --bind 127.0.0.1 >/dev/null 2>&1 & echo $! > "$OUT/.srv"); sleep .6
-  "$B" goto "http://127.0.0.1:4399/pages.html" >/dev/null; sleep 1; "$B" pdf "$PDF" >/dev/null; kill "$(cat "$OUT/.srv")" 2>/dev/null || true; echo "PDF $PDF"
+  PORT=$(python3 -c "import socket;s=socket.socket();s.bind(('127.0.0.1',0));print(s.getsockname()[1]);s.close()")
+  python3 -m http.server "$PORT" --bind 127.0.0.1 --directory "$OUT/stops" >/dev/null 2>&1 & SRV=$!; sleep .6
+  "$B" goto "http://127.0.0.1:$PORT/pages.html" >/dev/null; sleep 1; "$B" pdf "$PDF" >/dev/null; kill "$SRV" 2>/dev/null || true; echo "PDF $PDF"
   "$B" goto "$URL" >/dev/null; sleep 1
 fi
 if [ -n "$VIDEO" ]; then
