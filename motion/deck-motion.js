@@ -191,7 +191,7 @@ function dots(slide,data,kit){
 }
 
 /* 상태 보간: 요소마다 비트별 상태를 주면 그 사이를 이어서 그림. 숫자는 세면서 바뀌고 모양은 늘거나 줄며 옮겨 감.
-   요소 type: box(x,y 왼쪽 위, w,h, fill, label, sub, lp, rows/cols/vals면 칸 격자), dot(x,y 중심, r, label), ring(x,y,r,label),
+   요소 type: box(x,y 왼쪽 위, w,h, fill, label, sub, lp, rows/cols/vals면 칸 격자), dot(x,y 중심, r, label, lp=left|right|top|bottom), ring(x,y,r,label),
    text(x,y,s 또는 v+d+pre+suf, size, weight, anchor), link(from,to,arrow). 공통 a(투명도), tone.
    비트 set:{id:{상태}}에 처음 나온 요소는 a=1로 나타남. hide:[id]는 사라짐. 비트마다 note 가능. */
 const NUMK=['x','y','w','h','r','fill','v','a','size','lw'];
@@ -234,7 +234,7 @@ function morph(slide,data,kit){
         if(s.sub!=null){r.sb.move(lx,lp==='top'?s.y-14:ly+30);r.sb.set(s.sub);r.sb.show(a)}else r.sb.show(0)}
       else if(e.type==='dot'||e.type==='ring'){r.c.setAttribute('cx',s.x);r.c.setAttribute('cy',s.y);r.c.setAttribute('r',Math.max(0,s.r||12));r.c.style.opacity=a;
         if(e.type==='dot'){r.c.style.fill=tone;r.c.style.stroke='none'}else{r.c.style.fill=tone;r.c.style.fillOpacity=s.fill==null?.06:s.fill;r.c.style.stroke=tone;r.c.style.strokeWidth=s.lw||2.5}
-        if(s.label){r.lb.node.setAttribute('text-anchor',e.type==='ring'?'middle':s.lp==='left'?'end':'start');if(e.type==='dot')r.lb.move(s.lp==='left'?s.x-(s.r||12)-12:s.x+(s.r||12)+12,s.y+9);else r.lb.move(s.x,s.y-(s.r||12)-14);r.lb.set(s.label);r.lb.tone(s.ltone||(e.type==='dot'?'fg':(s.tone||'fg')));r.lb.show(a)}else r.lb.show(0)}
+        if(s.label){const dv=e.type==='dot'&&(s.lp==='bottom'||s.lp==='top');r.lb.node.setAttribute('text-anchor',e.type==='ring'||dv?'middle':s.lp==='left'?'end':'start');if(dv)r.lb.move(s.x,s.lp==='top'?s.y-(s.r||12)-14:s.y+(s.r||12)+30);else if(e.type==='dot')r.lb.move(s.lp==='left'?s.x-(s.r||12)-12:s.x+(s.r||12)+12,s.y+9);else r.lb.move(s.x,s.y-(s.r||12)-14);r.lb.set(s.label);r.lb.tone(s.ltone||(e.type==='dot'?'fg':(s.tone||'fg')));r.lb.show(a)}else r.lb.show(0)}
       else if(e.type==='text'){r.t.move(s.x,s.y);r.t.node.setAttribute('font-size',s.size||e.size||28);r.t.set(label(s));r.t.tone(s.tone||'fg');r.t.show(a)}
       else if(e.type==='link'){const A=center(s.from||e.from,t),Z=center(s.to||e.to,t);const dx=Z.x-A.x,dy=Z.y-A.y,L=Math.hypot(dx,dy)||1;const p0=clip(A,dx/L,dy/L),p1=clip(Z,-dx/L,-dy/L);
         r.l.setAttribute('d',`M${p0[0].toFixed(1)} ${p0[1].toFixed(1)}L${p1[0].toFixed(1)} ${p1[1].toFixed(1)}`);r.l.style.stroke=tone;r.l.style.strokeWidth=s.lw||3;

@@ -20,8 +20,18 @@ await send("Page.enable"); await send("Emulation.setDeviceMetricsOverride",{widt
 await send("Page.navigate",{url:pathToFileURL(src).href}); await sleep(3000);
 const stops=await ev("deckMotion.stops"); if(!stops){console.error("deckMotion이 없음. 모션 덱(.html, 런타임 포함)인지 확인");w.close();c.kill();process.exit(2)}
 const files=[];
-for(let i=0;i<stops.length;i++){ await ev(`deckMotion.goStop(${i},true);1`); await sleep(700); const s=await send("Page.captureScreenshot",{format:"png"}); const f=`${String(i).padStart(2,"0")}-${stops[i]}.png`; writeFileSync(join(out,f),Buffer.from(s.data,"base64")); files.push(f); }
-const issues=JSON.parse(await ev("JSON.stringify(deckMotion.check())")); writeFileSync(join(out,"check.json"),JSON.stringify(issues,null,1));
+// 글자 위로 선이 지나가는 곳: 보이는 svg 글자의 상자 안에 선(line, 채움 없는 path)의 점이 들어가면 문제로 봄
+const LINE_X=`(()=>{const vis=e=>{for(let n=e;n&&n.nodeType===1;n=n.parentNode){const cs=getComputedStyle(n);if(cs.display==="none"||cs.visibility==="hidden"||+cs.opacity<0.15)return false}return true};
+const sl=[...document.querySelectorAll(".slide")].find(s=>s.classList.contains("active")||s.classList.contains("visible"));if(!sl)return[];
+const txt=[...sl.querySelectorAll("svg text")].filter(t=>t.textContent.trim()&&vis(t)).map(t=>{const r=t.getBoundingClientRect();return{s:t.textContent.trim(),x0:r.left+2,x1:r.right-2,y0:r.top+r.height*0.25,y1:r.bottom-r.height*0.25}}).filter(r=>r.x1>r.x0&&r.y1>r.y0);
+const out=[];for(const l of sl.querySelectorAll("svg line, svg path")){if(l.closest("defs")||!vis(l))continue;const cs=getComputedStyle(l);if(l.tagName==="path"&&cs.fill!=="none"&&cs.fill!=="transparent"&&!cs.fill.startsWith("rgba(0, 0, 0, 0)"))continue;if(cs.stroke==="none"||+cs.strokeOpacity<0.15)continue;
+let L=0;try{L=l.getTotalLength()}catch(e){continue}if(!L)continue;const m=l.getScreenCTM();if(!m)continue;
+for(let k=0;k<=40;k++){const p=l.getPointAtLength(L*k/40);const x=m.a*p.x+m.c*p.y+m.e,y=m.b*p.x+m.d*p.y+m.f;const hit=txt.find(r=>x>r.x0&&x<r.x1&&y>r.y0&&y<r.y1);if(hit){out.push(hit.s);break}}}
+return [...new Set(out)]})()`;
+const lineHits=[];
+for(let i=0;i<stops.length;i++){ await ev(`deckMotion.goStop(${i},true);1`); await sleep(700); const s=await send("Page.captureScreenshot",{format:"png"}); const f=`${String(i).padStart(2,"0")}-${stops[i]}.png`; writeFileSync(join(out,f),Buffer.from(s.data,"base64")); files.push(f);
+  const h=await ev(LINE_X); if(h&&h.length) for(const t of h) lineHits.push({stop:stops[i],kind:"선이 글자를 지나감",text:t}); }
+const issues=JSON.parse(await ev("JSON.stringify(deckMotion.check())")).concat(lineHits); writeFileSync(join(out,"check.json"),JSON.stringify(issues,null,1));
 // 모음 한 장: 4열 격자, 칸마다 멈춤 지점 번호
 const COLS=4,CW=480,CH=270,ROWS=Math.ceil(files.length/COLS);
 const sheet=`<!doctype html><meta charset="utf-8"><style>body{margin:0;background:#fff;display:grid;grid-template-columns:repeat(${COLS},${CW}px);width:${COLS*CW}px}figure{margin:0;position:relative;width:${CW}px;height:${CH}px;outline:1px solid #ddd}img{width:100%;height:100%;display:block}figcaption{position:absolute;left:6px;top:4px;font:700 14px/1 system-ui;color:#fff;background:#c8451f;padding:3px 7px;border-radius:4px}</style>`+files.map(f=>`<figure><img src="${f}"><figcaption>${f.replace(/^\d+-/,"").replace(".png","")}</figcaption></figure>`).join("");
