@@ -417,7 +417,7 @@ function init(){
       root.querySelectorAll('.dm-card').forEach(c=>{if(c.scrollHeight>c.clientHeight+2&&visibleAlpha(c,root)>.05)out.push({stop:`${st.slide+1}.${st.beat+1}`,kind:'카드 넘침',text:c.textContent.trim().slice(0,24)})})});
     cur=-1;goStop(Math.max(0,saved),true);const uniq={};out.forEach(o=>uniq[o.stop+o.kind+o.text]=o);return Object.values(uniq)}
 
-  global.deckMotion={stops:stops.map(s=>`${s.slide+1}.${s.beat+1}`),duration:total,seek,goStop:setStopForCapture,check,next,prev};
+  global.deckMotion={stops:stops.map(s=>`${s.slide+1}.${s.beat+1}`),stopTimes:stops.map(s=>{let a=0;for(let i=0;i<s.slide;i++)a+=span[i];return {at:a+s.t,slideStart:a}}),duration:total,seek,goStop:setStopForCapture,check,next,prev};
   const refit=()=>{S.forEach(s=>s.kit&&s.kit.refit());paint()};
   if(document.fonts&&document.fonts.ready)document.fonts.ready.then(refit);
   const m=location.hash.match(/^#(\d+)\.(\d+)$/);let startN=0;if(m){const f=stops.findIndex(s=>s.slide===m[1]-1&&s.beat===m[2]-1);if(f>=0)startN=f}
