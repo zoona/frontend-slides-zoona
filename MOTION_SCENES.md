@@ -19,6 +19,8 @@
 
 모션 덱은 대부분 장이 장면이고 morph가 절반 이상이다(기준 덱과 요건은 SKILL.md "덱 종류 둘"). `carousel`과 `dots`는 덱당 한 번 정도.
 
+장면 종류는 그리는 도구다. 장마다 먼저 **설명 방식**(같은 장면 두 번, 따라가기, 폭증, 나란히 경주 등)을 [MOTION_WAYS.md](MOTION_WAYS.md)에서 고르고, 그 방식에 맞는 장면과 아래 "표현 기능"을 조합한다.
+
 **고르는 기준.** 상자와 선(`flow`)은 "무엇이 어디로 가나"를 보여 준다. 원리 설명에서 청중이 막히는 곳은 대개 "그 안에서 숫자가 어떻게 바뀌나"다. 값이 바뀌면 `bars`, 위치와 거리가 바뀌면 `space`, 크기나 모양이 바뀌면 `morph`로 그린다. 3D(`solid`)는 깊이 방향이 실제 뜻(층 수, 텐서의 셋째 차원)을 가질 때만 쓴다. 행렬 비율, 막대 값, 2차원 거리는 평면이 더 정확하게 읽히므로 3D로 세우지 않는다. 같은 장면의 상자가 다음 비트에서 줄거나 합쳐지는 것이 핵심이라 상자를 새로 그리지 말고 같은 id의 상태를 바꾼다.
 
 ## 덱 뼈대
@@ -132,6 +134,54 @@
 
 **FPV(시험)** — `solid`의 `cam`에서 `f`를 줄이고(700~1100) `cz`를 깊이 방향으로 옮기면 카메라가 판 사이를 지나간다. 가까워진 판은 저절로 흐려지고, `fog`를 주면 그보다 먼 판도 흐려져 앞쪽 몇 장만 보인다. 판이 많으면 한 줄만 값을 남기고(`vals`의 나머지 0) 그 줄을 따라가게 해야 읽힌다.
 
+## 표현 기능
+
+설명 방식(MOTION_WAYS.md)을 그리는 재료. 예시는 `examples/motion-gallery.src.html`.
+
+### 비트 공통 효과
+
+비트 객체에 키를 넣는다. `morph`, `bars`, `space`, `flow`, `solid`는 `beats[i]`에, `timeline`, `map`, `dots`는 비트 순서대로 `"fx":[{...},{...}]`에.
+
+| 키 | 뜻 |
+|---|---|
+| `cap`, `em`, `emTone` | 하단 가운데 자막 한 줄과 강조할 말(문자열 또는 배열). 같은 자막이 이어지면 다시 나타나지 않음 |
+| `spot:[x,y,w,h]` | 그 영역 바깥을 어둡게(화면 좌표). 다음 비트의 spot으로 옮겨 가고 `null`이면 걷힘 |
+| `focus:[id...]`, `focusA` | 그 요소만 남기고 나머지를 흐리게(기본 0.18). morph 계열만 |
+| `cam:[x,y,w,h]`, `camMove` | 그 영역을 화면(제목 아래 [60,230,1800,820], 장 JSON `camView`로 바꿈)에 채움. 장면 그룹만 움직이고 제목, 자막, note는 고정. `null`이면 원래 구도. morph 계열과 flow |
+| `bg`, `bgA`, `bgMove` | 바탕을 그 색으로 물들임(기본 진하기 0.22). 다음 비트까지 이어짐 |
+| `flash` | 비트 시작 섬광. `true` 흰색, `"black"` 검은 화면 컷, 톤 이름이면 그 색 |
+| `retone:{톤:[id...]}` | 여러 요소 색을 한 번에 바꿈 |
+| `cut:true` | 이 비트의 바뀜을 즉시 적용(되돌리기, 장면 재시작) |
+| `move` | 이 비트의 움직임 시간(초). 느린 재생에 씀 |
+| `again:{from,to,speed,keepTitle}` | 앞 비트 `from`~`to`를 다시 재생. `from` 직전 상태로 즉시 되돌린 비트 하나와 재생 비트가 생김. `speed:.45`면 두 배 넘게 느림. 이 비트의 `cap`은 되돌린 화면에 붙음 |
+
+### morph 요소 추가 상태
+
+| 키 | 뜻 |
+|---|---|
+| `enter` | 처음 나타날 때 방향: `left` `right` `up` `down` `drop`(위에서 떨어지며 튐) `pop`(크기 0에서) |
+| `exit` | `hide`될 때: `left` `right` `up` `down` `scatter`(흩어짐) `shrink` |
+| `path:[[x,y]...]`, `u`, `trail` | 요소 정의에 경로를 주면 `u`(0~1)가 경로 위 위치. 처음 나타날 때 0에서 출발. `trail:true`면 지나온 선을 그림 |
+| `v0`, `frac0`, `u0`, `p0` | 처음 나타날 때 시작값(숫자가 0부터 세며 등장) |
+| `vease`, `vdur`, `vsteps` | 숫자 변화 곡선과 시간. `io`(기본) `lin` `accel` `exp` `double` `step`. 그 비트에만 적용 |
+| `ease` | 위치와 크기 움직임 곡선. `io` `out` `lin` `accel` `back` |
+| `write:true` | text가 바뀔 때 지우고 다시 씀 |
+| `em`, `emTone` | text 안 한 단어 강조 |
+
+| 새 type | 상태 |
+|---|---|
+| `icon` | `x,y`(중심) `w`(크기) `shape` `label` `lp`(bottom, top, left, right) `fill` `lw`. shape: server db doc user cpu gpu cloud lock mail packet plane gear globe phone box bolt check cross clock atom hex queue chat search car chart. 비트 중간에 `shape`를 바꾸면 모양이 바뀜 |
+| `burst` | `x,y` `r`(퍼지는 반경) `n`(개수) `pr`(점 크기) `p`(0~1 퍼진 정도) `keep`(끝에 남김) |
+| `gauge` | `x,y,r,lw` `frac`(0~1 호) `v`,`pre`,`suf`,`d` 가운데 숫자 `label` 아래 글 |
+
+### 장 사이 전환
+
+장 JSON에 `"enter":"blur"`(일반 장은 `data-enter="blur"`). `flash` `black` `wipe`(위아래 띠가 닫혔다 열림) `blur` `pixel`(칸 단위로 드러남). 앞으로 넘어갈 때만 재생, 캡처와 검사에서는 꺼짐. 줌 허브가 걸린 장은 줌이 우선.
+
+### 칸이 하나씩 차는 효과
+
+칸마다 box 요소를 두고 `_d`로 시작 시각을 나눠 준다. 두 배씩 퍼지는 모양은 k번째 칸의 `_d = 전체 시간 × log2(k+1) / log2(칸 수)`. 예시 덱의 "폭증" 장.
+
 `bars`와 `space`는 `morph` 위에 만든 장면이라 `els`와 비트별 `set`으로 요소를 더할 수 있다.
 
 `tone` 값: `fg mut dim accent warn on c1 c2 c3 c4 c5`. 색은 전부 테마 변수(`--dm-*`)를 따른다.
@@ -158,7 +208,9 @@
 ```bash
 node scripts/motion-check.mjs <덱.html 절대경로> <출력 폴더>   # NN-장.비트.png, check.json, sheet.png
 ```
-검사 0건이어도 `sheet.png`(멈춤 지점 전부를 한 장에 모음)를 눈으로 본다. 문제가 있으면 종료 코드 1.
+검사 0건이어도 `sheet.png`(멈춤 지점 전부를 한 장에 모음)를 눈으로 본다. 문제가 있으면 종료 코드 1. `--mid`를 붙이면 비트 중간 화면도 모음에 들어가 움직이는 도중(경로 이동, 세는 숫자, 전환)을 확인할 수 있다. 카메라로 화면 밖에 완전히 나간 글자는 검사하지 않는다.
+
+표현 다양성 점검: `python3 scripts/motion-variety.py <덱.src.html>` (기준은 MOTION_WAYS.md "덱 구성표").
 
 PDF와 영상까지:
 

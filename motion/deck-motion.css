@@ -31,3 +31,9 @@
 .dm-flipwrap .dm-back .dm-tag,.dm-flipwrap .dm-back p{color:var(--dm-on)}
 .dm-stage3d{position:absolute;left:0;top:250px;width:1920px;height:620px;perspective:1500px}
 html.dm-capture .slide,html.dm-capture .slide *{transition:none!important;animation:none!important}
+.dm-trans{position:absolute;left:0;top:0;width:1920px;height:1080px;z-index:60;pointer-events:none;display:none}
+.dm-trans-a,.dm-trans-b{position:absolute;left:0;width:1920px;height:0;background:#000}
+.dm-trans-a{top:0}.dm-trans-b{bottom:0}
+.dm-trans canvas{position:absolute;left:0;top:0;width:1920px;height:1080px}
+.dm-svg .dm-cap{paint-order:stroke;stroke:var(--dm-bg);stroke-width:8px;stroke-linejoin:round}
+html.dm-capture .dm-trans{display:none!important}

@@ -1,6 +1,6 @@
 // motion-check.mjs — 모션 덱의 멈춤 지점을 전부 캡처하고 겹침·넘침 검사와 한 장짜리 모음(sheet.png)을 만든다.
 // gstack 없이 Chrome의 CDP만 쓴다. 보여 주기 전 점검용이며, PDF와 영상은 motion-capture.sh가 맡는다.
-// 사용: node scripts/motion-check.mjs <덱.html 절대경로> <출력 폴더>
+// 사용: node scripts/motion-check.mjs <덱.html 절대경로> <출력 폴더> [--mid]
 //   출력: NN-<장>.<비트>.png, check.json, sheet.html, sheet.png
 //   종료 코드: 검사 문제가 있으면 1
 import { spawn } from "node:child_process"; import { mkdtempSync, writeFileSync, mkdirSync, rmSync } from "node:fs"; import { tmpdir } from "node:os"; import { join, resolve } from "node:path"; import { pathToFileURL } from "node:url";
@@ -31,10 +31,14 @@ return [...new Set(out)]})()`;
 const lineHits=[];
 for(let i=0;i<stops.length;i++){ await ev(`deckMotion.goStop(${i},true);1`); await sleep(700); const s=await send("Page.captureScreenshot",{format:"png"}); const f=`${String(i).padStart(2,"0")}-${stops[i]}.png`; writeFileSync(join(out,f),Buffer.from(s.data,"base64")); files.push(f);
   const h=await ev(LINE_X); if(h&&h.length) for(const t of h) lineHits.push({stop:stops[i],kind:"선이 글자를 지나감",text:t}); }
+// --mid: 비트 중간 화면도 모음에 넣음(움직임 중간이 깨지지 않는지 눈으로 봄). 검사는 멈춤 지점만
+if(process.argv.includes("--mid")){const ts=await ev("JSON.stringify(deckMotion.stopTimes)");const T=JSON.parse(ts);const mids=[];
+  for(let i=0;i<T.length;i++){const a=i&&T[i-1].at>=T[i].slideStart?T[i-1].at:T[i].slideStart,b=T[i].at;if(b-a<.3)continue;await ev(`deckMotion.seek(${(a+(b-a)*.45).toFixed(3)});1`);await sleep(250);const s=await send("Page.captureScreenshot",{format:"png"});const f=`${String(i).padStart(2,"0")}m-${stops[i]}.png`;writeFileSync(join(out,f),Buffer.from(s.data,"base64"));mids.push([i,f])}
+  for(const [i,f] of mids.reverse())files.splice(files.findIndex(x=>x.startsWith(String(i).padStart(2,"0")+"-")),0,f)}
 const issues=JSON.parse(await ev("JSON.stringify(deckMotion.check())")).concat(lineHits); writeFileSync(join(out,"check.json"),JSON.stringify(issues,null,1));
 // 모음 한 장: 4열 격자, 칸마다 멈춤 지점 번호
 const COLS=4,CW=480,CH=270,ROWS=Math.ceil(files.length/COLS);
-const sheet=`<!doctype html><meta charset="utf-8"><style>body{margin:0;background:#fff;display:grid;grid-template-columns:repeat(${COLS},${CW}px);width:${COLS*CW}px}figure{margin:0;position:relative;width:${CW}px;height:${CH}px;outline:1px solid #ddd}img{width:100%;height:100%;display:block}figcaption{position:absolute;left:6px;top:4px;font:700 14px/1 system-ui;color:#fff;background:#c8451f;padding:3px 7px;border-radius:4px}</style>`+files.map(f=>`<figure><img src="${f}"><figcaption>${f.replace(/^\d+-/,"").replace(".png","")}</figcaption></figure>`).join("");
+const sheet=`<!doctype html><meta charset="utf-8"><style>body{margin:0;background:#fff;display:grid;grid-template-columns:repeat(${COLS},${CW}px);width:${COLS*CW}px}figure{margin:0;position:relative;width:${CW}px;height:${CH}px;outline:1px solid #ddd}img{width:100%;height:100%;display:block}figcaption{position:absolute;left:6px;top:4px;font:700 14px/1 system-ui;color:#fff;background:#c8451f;padding:3px 7px;border-radius:4px}</style>`+files.map(f=>`<figure><img src="${f}"><figcaption>${f.replace(/^\d+(m?)-/,(_,m)=>m?"중간 ":"").replace(".png","")}</figcaption></figure>`).join("");
 writeFileSync(join(out,"sheet.html"),sheet);
 await send("Emulation.setDeviceMetricsOverride",{width:COLS*CW,height:ROWS*CH,deviceScaleFactor:1,mobile:false});
 await send("Page.navigate",{url:pathToFileURL(join(out,"sheet.html")).href}); await sleep(1200);

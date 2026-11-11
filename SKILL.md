@@ -19,10 +19,12 @@ description: HTML 발표자료를 처음부터 만드는 스킬 — 고정 16:9 
 | **모션 덱** | 기본 덱 위에 `motion/` 런타임을 얹어, 설명 순서가 있는 장(시간선, 지도, 흐름, 카드, 큰 숫자, 막대, 공간, 상태 보간, 3D 투영)을 데이터로 그리는 장면으로 만든다. 키 한 번에 비트 하나 | "모션 덱", "움직임 장면 써서", 또는 장면 이름(timeline, map, flow, cards, dots, bars, space, morph, solid) 지정 | `.src.html`(원본) + 단일 `.html`, 같은 덱에서 PNG, PDF, 영상 |
 
 - 판정 규칙: 요청에 위 말이 없으면 **기본 덱**. 세션이 스스로 모션 덱으로 올리지 않는다.
-- 모션 덱의 기준은 **`projects/routerarena/deck/라우터-방식-설명.src.html`** (소유자 확정, 2026-11-08). 정적 덱에 장면 몇 개 얹기가 아니라 대부분 장을 장면으로 새로 짠다. 요건:
+- 모션 덱의 품질 기준선은 **`projects/routerarena/deck/라우터-방식-설명.src.html`** (소유자 확정, 2026-11-08). 정적 덱에 장면 몇 개 얹기가 아니라 대부분 장을 장면으로 새로 짠다. 기준선은 "데이터로 그린 움직임과 실제 값"이지 화면 모양이 아니다. 같은 모양을 반복하면 "같은 패턴 안에서 맴돈다"고 돌아온다(2026-11-11). 요건:
+  - **장마다 설명 방식을 먼저 고른다.** [MOTION_WAYS.md](MOTION_WAYS.md)의 설명 방식(같은 장면 두 번, 따라가기, 폭증, 나란히 경주, 초점, 변신 등)으로 덱 구성표를 쓰고, 장 JSON에 `way`를 넣고, 빌드 전 `python3 scripts/motion-variety.py`로 반복을 점검한다. 장면 장 5장 이상이면 설명 방식 4가지 이상
+  - 설명 방식마다 MOTION_SCENES.md "표현 기능"(카메라, 바깥 어둡게, 자막, 경로 이동, 값 곡선, 사물 그림, 계기판, 다시 재생, 장 전환)을 조합한다. 예시 모음: `examples/motion-gallery.src.html`
   - 장면은 **morph가 절반 이상**. 상자가 옮겨 가고, 격자가 채워지고, 숫자가 `v`로 세면서 바뀌는 과정을 그린다. flow(상자와 선)만 나열하면 "느낌이 다르다"고 돌아온다 (2026-11-08 device-sync 첫 판).
   - 구조도 flow 한두 장을 **허브**로 두고 하위 장에 `zoom:{hub, rect}`를 걸어 칸으로 들어갔다 나온다.
-  - 비트마다 `note.big`에 실제 수치 한 개, 우상단 `badge`에 "실제 값"이나 "예시".
+  - 큰 숫자 `note.big`은 몇 장, 한 가지 뜻에만(장마다 붙이면 식상하다고 돌아옴, 2026-11-11). 숫자는 화면 안에서 세며 바뀌게 그리는 쪽이 먼저. 우상단 `badge`에 "실제 값"이나 "예시".
   - 기본 테마는 어두운 바탕(라우터 덱의 스타일 블록을 그대로 가져옴), `t`로 밝은 테마. 기본 덱의 IBM Carbon 기본값은 모션 덱에 적용하지 않는다.
   - `deck/tools/build-deck.py` 같은 생성 스크립트로 만든다. 좌표 계산과 허브 칸 rect를 코드로 두어야 수정이 반복된다.
   - 채운 상자(`fill` 0.8 이상)의 글자는 `ltone: "on"`. 그러지 않으면 글자가 바탕과 같은 색이 된다.
@@ -219,7 +221,7 @@ Phase 1 콘텐츠 + Phase 2 스타일로 풀 덱 생성. 이미지가 없으면 
 
 **기본 생성 방식은 위 절차 그대로이고, 움직임 장면은 사용자가 요청했을 때만 쓴다.** 요청이 없으면 `motion/`을 덱에 넣지 않는다. 사용 시 구조도, 시간선, 지도, 흐름, 큰 숫자처럼 설명 순서가 있는 장에 **[MOTION_SCENES.md](MOTION_SCENES.md)**의 장면을 쓰고, 나머지 장은 일반 슬라이드로 둔다. 장면은 데이터만 채우며 키 한 번에 비트 하나가 재생된다. 같은 장면으로 PDF와 영상을 만든다.
 
-**보여 주기 전 점검(모션 덱 필수).** `inline-motion.py`로 묶은 뒤 `node scripts/motion-check.mjs <덱.html> <출력 폴더>`를 돌린다. 멈춤 지점 전부를 캡처해 겹침과 넘침을 검사하고 한 장짜리 모음 `sheet.png`를 만든다. **검사 0건이고 `sheet.png`를 눈으로 본 뒤에야** 사용자 브라우저에 연다. 고치는 중간 상태를 사용자 탭에 띄우지 않는다 — 중간 상태를 보면 깨진 화면으로 기억된다(2026-11-05). 글자 길이 한계는 MOTION_SCENES.md의 "글자 길이 한계".
+**보여 주기 전 점검(모션 덱 필수).** `inline-motion.py`로 묶은 뒤 `node scripts/motion-check.mjs <덱.html> <출력 폴더>`를 돌린다. 멈춤 지점 전부를 캡처해 겹침과 넘침을 검사하고 한 장짜리 모음 `sheet.png`를 만든다. `--mid`를 붙이면 비트 중간 화면도 모음에 들어간다(경로 이동, 세는 숫자, 전환 확인). **검사 0건이고 `sheet.png`를 눈으로 본 뒤에야** 사용자 브라우저에 연다. 고치는 중간 상태를 사용자 탭에 띄우지 않는다 — 중간 상태를 보면 깨진 화면으로 기억된다(2026-11-05). 글자 길이 한계는 MOTION_SCENES.md의 "글자 길이 한계".
 
 ---
 
@@ -259,7 +261,8 @@ Phase 1 콘텐츠 + Phase 2 스타일로 풀 덱 생성. 이미지가 없으면 
 | [EXTERNAL_DESIGN_SYSTEMS.md](EXTERNAL_DESIGN_SYSTEMS.md) | `design-systems/*.md` 파싱·토큰→CSS 매핑·타입 스케일·한글 폴백·멀티테마 | Phase 2 |
 | [THEME_SWITCHER.md](THEME_SWITCHER.md) | 테마 스위처 + 단축키 + 즐겨찾기 + 도움말 패턴 | 멀티테마 덱 (Phase 3/4) |
 | [REFINEMENT_MODE.md](REFINEMENT_MODE.md) | 딜리버리 후 배치 편집 프로토콜 | Phase 5 |
-| [MOTION_SCENES.md](MOTION_SCENES.md) · [motion/](motion/) | 움직임 장면 라이브러리 사용법과 런타임 | 설명 순서가 있는 장을 만들 때 (Phase 3) |
+| [MOTION_SCENES.md](MOTION_SCENES.md) · [motion/](motion/) | 움직임 장면 라이브러리 사용법과 런타임, 표현 기능 | 설명 순서가 있는 장을 만들 때 (Phase 3) |
+| [MOTION_WAYS.md](MOTION_WAYS.md) · [scripts/motion-variety.py](scripts/motion-variety.py) | 설명 방식 목록, 움직임 규칙, 덱 구성표와 다양성 점검 | 모션 덱 구성 단계 (장면 고르기 전) |
 | [scripts/inline-motion.py](scripts/inline-motion.py) · [scripts/motion-capture.sh](scripts/motion-capture.sh) | 단일 HTML 묶기 · 멈춤 지점 검사, PNG, PDF, 영상 출력 | 움직임 장면 덱 |
 | [scripts/add-design-system.sh](scripts/add-design-system.sh) | getdesign.md 카탈로그에서 디자인시스템 받기 (`--list`/`--all`/`<brand>`/`--force`) | 라이브러리에 없는 브랜드가 필요할 때 |
 | [scripts/gen-themes.py](scripts/gen-themes.py) | 라이브러리 → 덱에 `.theme-*` CSS + `<option>` 자동 주입 (마커 사이) | 멀티테마 스위처 덱 생성 |
