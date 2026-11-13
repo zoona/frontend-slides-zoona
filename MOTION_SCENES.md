@@ -62,7 +62,7 @@
  "outside":{"title":"지도 밖","items":["NPU"]},"votes":{"양자화":6}}
 ```
 
-**flow** — `col`로 열, 같은 열 안 순서로 행을 자동 배치. 비트별로 `nodes`, `edges`(`"a>b"`)를 추가하고 `hide`로 지움. `particles:true`면 입자가 흐름. `note`는 큰 숫자 표시. `style:"sketch"`면 손그림 화풍.
+**flow** — `col`로 열, 같은 열 안 순서로 행을 자동 배치. 비트별로 `nodes`, `edges`(`"a>b"`)를 추가하고 `hide`로 지움. `particles:true`면 입자가 흐름(선 길이 220px마다 하나씩 고르게, 초당 150px로 같은 속도. `w`가 굵으면 간격이 좁아짐). `note`는 큰 숫자 표시. `style:"sketch"`면 손그림 화풍.
 ```json
 {"nodes":[{"id":"a","label":"요청","col":0},{"id":"b","label":"기록","col":1,"tone":"warn"}],
  "edges":[{"from":"a","to":"b","w":3}],

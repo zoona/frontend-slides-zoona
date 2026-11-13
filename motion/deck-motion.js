@@ -198,7 +198,7 @@ function flow(slide,data,kit){
   if(!B[0].edges)edgesAll.forEach(e=>{if(!showAt.has(edgeKey(e)))showAt.set(edgeKey(e),0)});
   const E=edgesAll.map((e,i)=>{const k=edgeKey(e),tone=e.tone||(e.b.tone||'mut');const ln=kit.line(e.pts,{w:sk?5:1.5+(e.w||1)*1.1,tone:sk&&!e.tone?'fg':tone,parent:g});const sb=showAt.get(k);const hb=hideAt.has(k)?hideAt.get(k):[e.from,e.to].map(x=>hideAt.has(x)?hideAt.get(x):1e9).reduce((a,b)=>Math.min(a,b));return{e,ln,sb:sb==null?1e9:sb,hb,tone,i}});
   const NB=N.map((n,i)=>{const tone=n.tone||(sk?'fg':'dim');const box=kit.line(roundRectPts(n.x,n.y-n.h/2,nw,n.h,sk?22:12).concat([[n.x+(sk?22:12),n.y-n.h/2]]),{w:sk?5:3,tone,parent:g});const tx=kit.text(n.label,n.x+nw/2,n.y+(n.sub?(sk?-6:-4):(sk?16:11)),{size:sk?52:30,weight:sk?700:600,anchor:'middle',fit:nw-28,tone:n.tone&&n.tone!=='dim'?n.tone:'fg',parent:cg});const sb=n.sub?kit.text(n.sub,n.x+nw/2,n.y+(sk?44:28),{size:sk?34:22,anchor:'middle',tone:sk?'fg':'mut',fit:nw-24,weight:sk?700:500,parent:cg}):null;return{n,box,tx,sb,beat:showAt.has(n.id)?showAt.get(n.id):0,hb:hideAt.has(n.id)?hideAt.get(n.id):1e9,order:i}});
-  const P=[];E.forEach(o=>{const c=Math.round(6+(o.e.w||1)*6);for(let i=0;i<c;i++)P.push({o,ph:hash(o.i*17+i*3+1),n:kit.dot(0,0,5,{tone:o.tone,parent:cg})})});
+  const P=[];E.forEach(o=>{let L=0;o.e.pts.forEach((q,j)=>{if(j)L+=Math.hypot(q[0]-o.e.pts[j-1][0],q[1]-o.e.pts[j-1][1])});o.L=Math.max(L,1);const gap=220/Math.sqrt(o.e.w||1),c=Math.max(1,Math.round(o.L/gap)),off=hash(o.i*17+1);for(let i=0;i<c;i++)P.push({o,ph:(i/c+off)%1,n:kit.dot(0,0,5,{tone:o.tone,parent:cg})})});
   const partFrom=B.findIndex(b=>b.particles);
   const notes=[];B.forEach((b,i)=>{if(b.note){const x=b.note.x||1810,y=b.note.y||1020,anchor=b.note.anchor||'end';const big=b.note.big?kit.text(b.note.big,x,y-44,{size:84,weight:800,anchor,tone:b.note.tone||'warn'}):null;const tx=b.note.text?kit.text(b.note.text,x,y,{size:26,anchor,tone:'mut'}):null;notes.push({i,big,tx})}});
   const fx=Fx(kit,B,st,head,{g:cg,keep:notes.flatMap(o=>[o.big&&o.big.node,o.tx&&o.tx.node].filter(Boolean)),view:data.camView});
@@ -207,7 +207,7 @@ function flow(slide,data,kit){
     E.forEach((o,i)=>{if(o.sb>=1e9)return o.ln.draw(0);const s=dtBeat(o.sb)+.5+(i%12)*.07,dr=eio(seg(t,s,s+.85));const out=o.hb<1e9?eo(seg(t,st[o.hb],st[o.hb]+.5)):0;o.ln.draw(dr,(data.edgeAlpha||(sk?1:.55))*(1-out))});
     P.forEach(p=>{const o=p.o;if(partFrom<0||o.sb>=1e9||o.hb<=partFrom&&t>=st[o.hb]+.5){p.n.set(0,0,0,0);return}
       const start=Math.max(st[partFrom],st[o.sb]+.8);const out=o.hb<1e9?1-eo(seg(t,st[o.hb],st[o.hb]+.4)):1;const a=seg(t,start,start+.4)*out;if(a<=0){p.n.set(0,0,0,0);return}
-      const u=((t*.28+p.ph)%1+1)%1,xy=o.ln.at(u);p.n.set(xy[0],xy[1],5,a*.95)});
+      const u=((t*150/o.L+p.ph)%1+1)%1,xy=o.ln.at(u);p.n.set(xy[0],xy[1],5,a*.95)});
     notes.forEach(o=>{const s=st[o.i]+.5;const nx=o.i+1<B.length?1-eo(seg(t,st[o.i+1],st[o.i+1]+.3)):1;if(o.big)o.big.show(eo(seg(t,s,s+.5))*nx);if(o.tx)o.tx.show(eo(seg(t,s+.15,s+.65))*nx)});
   }};
 }
