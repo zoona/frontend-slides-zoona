@@ -13,7 +13,6 @@ def scene(kind, data, way, enter=None):
     data["way"] = way
     if enter:
         data["enter"] = enter
-    data.setdefault("badge", BADGE)
     return f'<section class="slide" data-motion="{kind}"><script type="application/json">{json.dumps(data, ensure_ascii=False)}</script></section>'
 
 

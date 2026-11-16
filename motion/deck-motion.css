@@ -37,14 +37,19 @@ html.dm-capture .slide,html.dm-capture .slide *{transition:none!important;animat
 .dm-trans canvas{position:absolute;left:0;top:0;width:1920px;height:1080px}
 .dm-svg .dm-cap{paint-order:stroke;stroke:var(--dm-bg);stroke-width:8px;stroke-linejoin:round}
 html.dm-capture .dm-trans{display:none!important}
-/* 화면 방식 mg(모션그래픽): DeckMotion.init({look:"mg"}) 또는 M 키. 바탕은 장 사이에 이어지는 한 장, 선과 채움에 번짐, 가장자리 어둡게, 고운 입자.
-   밝은 테마는 --dm-glow:none 으로 번짐을 끔 */
+/* 화면 방식 mg(모션그래픽): DeckMotion.init({look:"mg"}) 또는 M 키.
+   밝은 바탕과 점 격자, 흰 카드와 그림자 한 단계, 강조색 하나와 회색 단계. 번짐, 입자, 그라디언트는 쓰지 않음.
+   바탕은 장 사이에 이어지는 한 장이고 장을 넘기면 옆으로 흐름. 덱 테마 색은 이 방식의 색으로 덮임 */
+:root{--dm-card:color-mix(in srgb,var(--dm-fg) 7%,var(--dm-bg));--dm-edge:var(--dm-dim)}
+html.dm-mg{--bg-primary:#ECEDF1;--text-primary:#15161C;--text-secondary:#6B6F7B;--accent:#2F45E6;
+  --dm-bg:#ECEDF1;--dm-fg:#15161C;--dm-mut:#6B6F7B;--dm-accent:#2F45E6;--dm-on:#fff;--dm-card:#fff;--dm-edge:rgba(20,22,40,.09);
+  --dm-warn:#D9662B;--dm-c1:#2F45E6;--dm-c2:#0F9D8C;--dm-c3:#D9862B;--dm-c4:#7A5AE0;--dm-c5:#D4508A}
 .dm-back{position:absolute;left:0;top:0;width:1920px;height:1080px;max-width:none;display:none}
-.dm-grain{position:absolute;inset:0;pointer-events:none;display:none;z-index:49;opacity:.06;mix-blend-mode:overlay;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='320' height='320' filter='url(%23n)'/%3E%3C/svg%3E")}
-html.dm-mg .dm-back,html.dm-mg .dm-grain{display:block}
+html.dm-mg .dm-back{display:block}
 html.dm-mg .deck-stage{background:var(--dm-bg)}
 html.dm-mg .dm-slide{background:transparent}
 html.dm-mg .slide:not(.dm-slide)>*{background-color:transparent!important}
-html.dm-mg .dm-svg{filter:var(--dm-glow,url(#dmBloom))}
-html.dm-mg .dm-card{background:linear-gradient(160deg,color-mix(in srgb,var(--dm-fg) 10%,transparent),color-mix(in srgb,var(--dm-fg) 3%,transparent));box-shadow:0 30px 70px -30px rgba(0,0,0,.6),inset 0 1px 0 color-mix(in srgb,var(--dm-fg) 18%,transparent)}
-html.dm-mg .dm-flipwrap .dm-back{background:var(--dm-accent)}
+html.dm-mg .dm-shadow{filter:drop-shadow(0 14px 16px rgba(20,22,40,.13))}
+html.dm-mg .dm-card{background:var(--dm-card);border:1px solid var(--dm-edge);box-shadow:0 22px 44px -22px rgba(20,22,40,.28)}
+html.dm-mg .dm-flipwrap .dm-card{background:var(--dm-card);border:1px solid var(--dm-edge)}
+html.dm-mg .dm-flipwrap .dm-back{background:var(--dm-accent);border-color:var(--dm-accent)}
