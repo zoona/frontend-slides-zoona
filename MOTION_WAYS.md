@@ -41,7 +41,7 @@
 
 ## 모션그래픽 방식 (mg)
 
-`DeckMotion.init({look:"mg"})`로 켬. 장면 데이터는 그대로 두고 화면과 움직임만 바뀜. 화면 기준은 위키 `projects/deck-engine/prototypes/j-code-motion-graphic.html`(소유자 확인, 2026-11-16). `M` 키로 종전 방식(flat)과 바꿔 가며 비교, 주소에 `?look=mg`를 붙여도 켜짐. 새 모션 덱은 mg로 시작함. 기존 덱은 다시 묶을 때 `init` 한 줄만 바꾸면 적용됨.
+`DeckMotion.init({look:"mg"})`로 켬. 장면 데이터는 그대로 두고 화면과 움직임만 바뀜. 덱의 색 테마를 그대로 쓰려면 `init({look:"mg",palette:"deck"})`(움직임, 카드, 이어지는 바탕만 적용되고 색은 덱 테마를 따름, `t` 테마 전환도 그대로). 화면 기준은 위키 `projects/deck-engine/prototypes/j-code-motion-graphic.html`(소유자 확인, 2026-11-16). `M` 키로 종전 방식(flat)과 바꿔 가며 비교, 주소에 `?look=mg`를 붙여도 켜짐. 새 모션 덱은 mg로 시작함. 기존 덱은 다시 묶을 때 `init` 한 줄만 바꾸면 적용됨.
 
 근거: 코드로 만든 모션그래픽과 영상 생성 모델을 비교한 영상 분석(위키 `projects/deck-engine/research/코드-모션그래픽-제작법.md`). 코드로 만든 화면이 슬라이드처럼 보이는 원인은 셋이었음. 움직임 곡선이 밋밋함, 카메라가 안 움직임, 장면을 잇는 공통 요소가 없음.
 

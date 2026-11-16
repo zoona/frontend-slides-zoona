@@ -682,6 +682,7 @@ function init(opts){opts=opts||{};
       root.querySelectorAll('.dm-card').forEach(c=>{if(c.scrollHeight>c.clientHeight+2&&visibleAlpha(c,root)>.05)out.push({stop:`${st.slide+1}.${st.beat+1}`,kind:'카드 넘침',text:c.textContent.trim().slice(0,24)})})});
     cur=-1;goStop(Math.max(0,saved),true);const uniq={};out.forEach(o=>uniq[o.stop+o.kind+o.text]=o);return Object.values(uniq)}
 
+  if(opts.palette==='deck')root.classList.add('dm-keep');
   setLook(opts.look==='mg'||/[?&]look=mg\b/.test(location.search));
   AUTO=!!opts.auto||/[?&]auto=1\b/.test(location.search);
   if(global.deckHelp)global.deckHelp.addSection('화면 방식',[['M','모션그래픽 방식 켜고 끄기'],['P','자동 재생 켜고 끄기']]);
