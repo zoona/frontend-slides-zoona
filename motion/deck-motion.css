@@ -37,3 +37,14 @@ html.dm-capture .slide,html.dm-capture .slide *{transition:none!important;animat
 .dm-trans canvas{position:absolute;left:0;top:0;width:1920px;height:1080px}
 .dm-svg .dm-cap{paint-order:stroke;stroke:var(--dm-bg);stroke-width:8px;stroke-linejoin:round}
 html.dm-capture .dm-trans{display:none!important}
+/* 화면 방식 mg(모션그래픽): DeckMotion.init({look:"mg"}) 또는 M 키. 바탕은 장 사이에 이어지는 한 장, 선과 채움에 번짐, 가장자리 어둡게, 고운 입자.
+   밝은 테마는 --dm-glow:none 으로 번짐을 끔 */
+.dm-back{position:absolute;left:0;top:0;width:1920px;height:1080px;max-width:none;display:none}
+.dm-grain{position:absolute;inset:0;pointer-events:none;display:none;z-index:49;opacity:.06;mix-blend-mode:overlay;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='320' height='320' filter='url(%23n)'/%3E%3C/svg%3E")}
+html.dm-mg .dm-back,html.dm-mg .dm-grain{display:block}
+html.dm-mg .deck-stage{background:var(--dm-bg)}
+html.dm-mg .dm-slide{background:transparent}
+html.dm-mg .slide:not(.dm-slide)>*{background-color:transparent!important}
+html.dm-mg .dm-svg{filter:var(--dm-glow,url(#dmBloom))}
+html.dm-mg .dm-card{background:linear-gradient(160deg,color-mix(in srgb,var(--dm-fg) 10%,transparent),color-mix(in srgb,var(--dm-fg) 3%,transparent));box-shadow:0 30px 70px -30px rgba(0,0,0,.6),inset 0 1px 0 color-mix(in srgb,var(--dm-fg) 18%,transparent)}
+html.dm-mg .dm-flipwrap .dm-back{background:var(--dm-accent)}

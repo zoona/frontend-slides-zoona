@@ -175,7 +175,7 @@ S.append(scene("flow", {
 head = (HERE / "motion-demo.src.html").read_text(encoding="utf8").split('<section class="slide active">')[0].replace("움직임 장면 데모", "움직임 표현 모음")
 cover = '<section class="slide active"><div class="slide-content cover"><h1>움직임 표현 모음</h1><p>설명 방식 여덟 가지 (전부 예시 데이터)</p></div></section>'
 end = '<section class="slide" data-enter="black"><div class="slide-content cover"><h1>움직임 표현 모음</h1><p>처음 구도로 돌아와 닫음</p></div></section>'
-tail = '</div></div>\n<script>/*DM-BOOT*/</script><script>/*DM-JS*/</script>\n<script>DeckMotion.init();addEventListener(\'keydown\',e=>{if(e.key===\'t\')document.documentElement.classList.toggle(\'theme-paper\')});</script></body></html>\n'
+tail = '</div></div>\n<script>/*DM-BOOT*/</script><script>/*DM-JS*/</script>\n<script>DeckMotion.init({look:"mg"});addEventListener(\'keydown\',e=>{if(e.key===\'t\')document.documentElement.classList.toggle(\'theme-paper\')});</script></body></html>\n'
 out = HERE / "motion-gallery.src.html"
 out.write_text(head + cover + "".join(S) + end + tail, encoding="utf8")
 print(out)

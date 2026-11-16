@@ -34,6 +34,8 @@
 <script>/*DM-BOOT*/</ script><script>/*DM-JS*/</ script><script>DeckMotion.init();</ script>
 ```
 
+`DeckMotion.init({look:"mg"})`면 모션그래픽 방식으로 그린다(MOTION_WAYS.md "모션그래픽 방식"). 인자가 없으면 종전 방식.
+
 위 `</ script>`의 공백은 이 문서 표기용이므로 실제 덱에서는 뺀다. 작성 후 `python3 scripts/inline-motion.py 입력.html 출력.html`로 단일 파일을 만든다. 예시 전체는 `examples/motion-demo.src.html`.
 
 ## 공통 필드
