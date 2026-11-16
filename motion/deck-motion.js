@@ -535,7 +535,7 @@ function canvas(slide,data,kit){
   const cmOf=b=>B[b].camMove||1;B.forEach((b,i)=>{const Z=CT[i];CS.push(i?CE[i-1]:Z);CE.push([Z[0],Z[1],Z[2]*(1+PUSH*Math.max(0,beats[i]-clk(b)-cmOf(i)))])});
   const camAt=t=>{const b=bAt(t),u=t-st[b]-clk(B[b]),cm=cmOf(b),A=CS[b],Z=CT[b],p=mgm(cl(u/cm)),zt=Z[2]*(1+PUSH*Math.max(0,u-cm));
     return{x:lerp(A[0],Z[0],p),y:lerp(A[1],Z[1],p),z:Math.exp(lerp(Math.log(A[2]),Math.log(zt),p))}};
-  const fmt=q=>(q.pre||'')+Number(q.v).toFixed(q.d||0)+(q.suf||'');
+  const fmt=q=>(q.pre||'')+Number(q.v).toFixed(q.d||0).replace(/\B(?=(\d{3})+(?!\d))/g,q.d?'':',')+(q.suf||'');
   return{beats,draw(t){const b=bAt(t),c=camAt(t);
     world.style.transform=`translate(960px,540px) scale(${c.z.toFixed(5)}) translate(${(-c.x).toFixed(2)}px,${(-c.y).toFixed(2)}px)`;
     back.style.transform=`translate(960px,540px) scale(${Math.pow(c.z,.6).toFixed(5)}) translate(${(-c.x*.55).toFixed(2)}px,${(-c.y*.55).toFixed(2)}px)`;
