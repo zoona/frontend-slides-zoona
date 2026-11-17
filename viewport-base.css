@@ -169,6 +169,15 @@ img, svg, video { display: block; max-width: 100%; }
 .deck-nav-num .bt i.on { opacity: 1; background: var(--accent, #e0a53f); }
 .deck-nav-num .go { color: var(--accent, #e0a53f); }
 html.dm-capture .deck-nav { display: none; }
+/* 시작점 고르기 카드 (START PICKER). 색은 덱 변수를 따름 */
+.deck-start-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(500px, 1fr)); gap: 16px; margin-top: 36px; align-content: start; }
+.deck-start-item { all: unset; box-sizing: border-box; cursor: pointer; display: grid; grid-template-columns: 52px 1fr auto; align-items: center; gap: 14px;
+  padding: 20px 24px; border-radius: 20px; background: var(--surface, #fff); border: 1.5px solid var(--line, rgba(0,0,0,.12));
+  box-shadow: 0 10px 26px rgba(0,0,0,.06); font-family: inherit; color: var(--text-primary, var(--fg, #15161a)); transition: transform .15s ease, border-color .15s ease; }
+.deck-start-item:hover, .deck-start-item:focus-visible { transform: translateY(-3px); border-color: var(--accent, #2f45e6); outline: none; }
+.deck-start-item .n { font-size: 40px; font-weight: 800; color: var(--accent, #2f45e6); }
+.deck-start-item .t { font-size: 27px; font-weight: 700; line-height: 1.3; }
+.deck-start-item .r { font-size: 20px; color: var(--text-secondary, var(--muted, #5e6270)); }
 @media print { .deck-nav, .deck-toc, .deck-help { display: none !important; } }
 
 .deck-toc { position: fixed; inset: 0; z-index: 10000; display: none;
@@ -324,6 +333,34 @@ html.dm-capture .deck-nav { display: none; }
        go: function (n) { jump(n); },
        setGo: function (fn) { goFn = fn; }
      };
+     // --- START PICKER: 표지 다음 장 등에 <div class="deck-start-list"></div>를 두면 절 카드가 채워짐.
+     // 절은 data-section 또는 모션 JSON kicker의 앞 번호로 묶고, 누르면 그 절 첫 장으로 이동(2026-11-17).
+     // 어느 요소든 data-goto="9"(1부터 센 장 번호)를 주면 그 장으로 가는 버튼이 됨.
+     (function () {
+       var holders = document.querySelectorAll('.deck-start-list');
+       if (!holders.length) return;
+       var from = slides.indexOf(holders[0].closest('.slide'));   // 고르기 장 뒤의 절만 보임
+       var groups = [];
+       metas.forEach(function (m, k) {
+         var sct = (m.section || '').trim(); if (!sct || k <= from) return;
+         var key = (sct.match(/^(\d+)/) || [])[1] || sct, g = groups[groups.length - 1];
+         if (g && g.k2 === key) { g.last = k; return; }
+         groups.push({ key: /^\d+$/.test(key) ? key : '', name: sct.replace(/^\d+\s*/, ''), first: k, last: k, k2: key });
+       });
+       Array.prototype.forEach.call(holders, function (h) {
+         h.innerHTML = groups.map(function (g) {
+           return '<button type="button" class="deck-start-item" data-n="' + g.first + '">' +
+             '<span class="n">' + esc(g.key) + '</span><span class="t">' + esc(g.name) + '</span>' +
+             '<span class="r">' + (g.first + 1) + (g.last > g.first ? '~' + (g.last + 1) : '') + '장</span></button>';
+         }).join('');
+       });
+       document.addEventListener('click', function (e) {
+         var b = e.target.closest && e.target.closest('.deck-start-item, [data-goto]');
+         if (!b) return;
+         e.preventDefault(); e.stopPropagation();
+         window.deckNav.go(b.dataset.n != null ? +b.dataset.n : (+b.dataset.goto - 1));
+       }, true);
+     })();
      // digits + Enter jump; while the TOC is open, arrows move the selection.
      // Capture phase so it runs before the motion runtime's own key handler.
      window.addEventListener('keydown', function (e) {
