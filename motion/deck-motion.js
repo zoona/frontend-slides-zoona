@@ -78,7 +78,7 @@ function Fx(kit,B,st,head,o={}){
   const BG=carry('bg'),BGA=carry('bgA'),CAM=carry('cam'),SP=carry('spot');
   let mask=null;if(has('spot')){mask=kit.mk('path',{'fill-rule':'evenodd'});mask.style.fill=tv('bg')}
   lift.forEach(n=>svg.appendChild(n));
-  let cap=null;if(has('cap')){cap=kit.text('',960,1018,{size:o.capSize||36,weight:600,anchor:'middle'});cap.node.classList.add('dm-cap')}
+  let cap=null;if(has('cap')){cap=kit.text('',960,1008,{size:o.capSize||36,weight:600,anchor:'middle'});cap.node.classList.add('dm-cap')}
   let fl=null;if(has('flash')){fl=kit.mk('rect',{x:-40,y:-40,width:2000,height:1160});fl.style.opacity=0;fl.style.pointerEvents='none'}
   const ident=CV;const rr=(a,b,p)=>{const A=a||ident,Z=b||ident;const w=Math.exp(lerp(Math.log(A[2]),Math.log(Z[2]),p)),h=Math.exp(lerp(Math.log(A[3]),Math.log(Z[3]),p));return[lerp(A[0]+A[2]/2,Z[0]+Z[2]/2,p)-w/2,lerp(A[1]+A[3]/2,Z[1]+Z[3]/2,p)-h/2,w,h]};
   const pOf=(b,t,d)=>B[b]&&B[b].cut?1:eio(seg(t,st[b],st[b]+d));
@@ -585,11 +585,6 @@ function init(opts){opts=opts||{};
   if(global.deckNav)global.deckNav.setGo(i=>{const n=stops.findIndex(s=>s.slide===i);if(n>=0)goStop(n)});
   function activate(i){if(si===i&&S[i].el.classList.contains('active'))return;si=i;S.forEach((s,k)=>s.el.classList.toggle('active',k===i));document.documentElement.style.setProperty('--slide',i)}
   const root=document.documentElement,capMode=()=>root.classList.contains('dm-capture');
-  /* 음성 조작부(.nar)가 화면 아래에 얹힌 덱이면 자막을 조작부 위로 올림. 조작부는 창 크기와 무관한 고정 크기라 창이 작을수록 무대 좌표로 커지므로 실제 위치를 재서 화면 픽셀로 18px 띄움(무대 좌표 최대 72) */
-  const liftCap=()=>{const n=document.querySelector('.nar'),st=document.querySelector('.deck-stage');let lift=0;
-    if(n&&st&&!capMode()){const r=n.getBoundingClientRect(),b=st.getBoundingClientRect();if(r.height>0&&b.height>0){const k=b.height/1080;lift=Math.min(72,Math.max(0,(b.top+1027*k+18-r.top)/k))}}
-    root.style.setProperty('--dm-cap-lift',lift.toFixed(1))};
-  addEventListener('resize',liftCap);[0,600,2000].forEach(t=>setTimeout(liftCap,t));
   const paint=()=>{S[si].draw(T);if(MG&&(capMode()||reduced))drawBack()};
   /* mg 바탕: 장이 바뀌어도 이어지는 한 장의 배경(빛, 점 격자, 떠다니는 점, 가장자리 어둡게). 장을 넘기면 옆으로 흘러가고 카메라가 움직이면 덜 움직임(시차) */
   let back=null,bctx=null,pal=null,palAt=-1e9,araf=null,alast=0,drift=0;const PAN={x:0,y:0},PT={x:0,y:0};

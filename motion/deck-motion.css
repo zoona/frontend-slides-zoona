@@ -36,7 +36,6 @@ html.dm-capture .slide,html.dm-capture .slide *{transition:none!important;animat
 .dm-trans-a{top:0}.dm-trans-b{bottom:0}
 .dm-trans canvas{position:absolute;left:0;top:0;width:1920px;height:1080px}
 .dm-svg .dm-cap{paint-order:stroke;stroke:var(--dm-bg);stroke-width:8px;stroke-linejoin:round}
-.dm-svg .dm-cap,.dm-cv-cap{translate:0 calc(-1px*var(--dm-cap-lift,0));transition:translate .3s}
 html.dm-capture .dm-trans{display:none!important}
 /* 화면 방식 mg(모션그래픽): DeckMotion.init({look:"mg"}) 또는 M 키.
    밝은 바탕과 점 격자, 흰 카드와 그림자 한 단계, 강조색 하나와 회색 단계. 번짐, 입자, 그라디언트는 쓰지 않음.
