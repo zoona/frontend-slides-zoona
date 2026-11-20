@@ -356,7 +356,7 @@ function morph(slide,data,kit){
         const lp=s.lp||'in',fs=+r.lb.node.getAttribute('font-size');let lx=s.x+s.w/2,ly=s.y+s.h/2+fs*.35,anc='middle';
         if(lp==='top')ly=s.y-(s.sub?44:16);else if(lp==='bottom')ly=s.y+s.h+fs+8;else if(lp==='left'){lx=s.x-18;anc='end'}else if(lp==='right'){lx=s.x+s.w+18;anc='start'}else if(s.sub)ly-=fs*.45;
         r.lb.node.setAttribute('text-anchor',anc);r.sb.node.setAttribute('text-anchor',anc);r.lb.move(lx,ly);r.lb.set(s.label!=null?s.label:'');r.lb.tone(s.ltone||(s.tone&&s.tone!=='dim'?s.tone:'fg'));r.lb.show(a);
-        if(s.sub!=null){r.sb.move(lx,lp==='top'?s.y-14:ly+30);r.sb.set(s.sub);r.sb.show(a)}else r.sb.show(0)}
+        if(s.sub!=null){r.sb.move(lx,lp==='top'?s.y-14:ly+30);r.sb.set(s.sub);r.sb.tone(s.ltone==='on'?'on':'mut');r.sb.show(a)}else r.sb.show(0)}
       else if(e.type==='dot'||e.type==='ring'){r.c.setAttribute('cx',s.x);r.c.setAttribute('cy',s.y);r.c.setAttribute('r',Math.max(0,s.r||12));r.c.style.opacity=a;
         if(e.type==='dot'){r.c.style.fill=tone;r.c.style.stroke='none'}else{r.c.style.fill=tone;r.c.style.fillOpacity=s.fill==null?.06:s.fill;r.c.style.stroke=tone;r.c.style.strokeWidth=s.lw||2.5}
         if(s.label){const dv=e.type==='dot'&&(s.lp==='bottom'||s.lp==='top');r.lb.node.setAttribute('text-anchor',e.type==='ring'||dv?'middle':s.lp==='left'?'end':'start');if(dv)r.lb.move(s.x,s.lp==='top'?s.y-(s.r||12)-14:s.y+(s.r||12)+30);else if(e.type==='dot')r.lb.move(s.lp==='left'?s.x-(s.r||12)-12:s.x+(s.r||12)+12,s.y+9);else r.lb.move(s.x,s.y-(s.r||12)-14);r.lb.set(s.label);r.lb.tone(s.ltone||(e.type==='dot'?'fg':(s.tone||'fg')));r.lb.show(a)}else r.lb.show(0)}
