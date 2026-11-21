@@ -8,7 +8,7 @@ description: HTML 발표자료를 처음부터 만드는 스킬 — 고정 16:9 
 제로 디펜던시로 애니메이션이 풍부한 **단일 HTML 발표자료**를 만드는 스킬. 브라우저에서 그대로 열리며 빌드 도구가 필요 없다. 세 축으로 구성된다:
 
 1. **고정 16:9 스테이지 엔진** — `viewport-base.css` (스케일 스테이지 + 부트스트랩 스크립트)
-2. **디자인시스템 테마** — 브랜드 토큰 라이브러리(74종 번들)를 파싱해 라이브 테마 스위처로 (단축키·즐겨찾기·도움말 포함)
+2. **디자인시스템 테마** — 브랜드 토큰 라이브러리(74종 번들)와 자체 색 테마(`pitch-*` 8종)를 파싱해 라이브 테마 스위처로 (단축키·즐겨찾기·도움말 포함)
 3. **Refinement Mode** — 배치 편집 프로토콜 (요청 1회 = 변경 리스트 전체 처리)
 
 ## 덱 종류 둘
@@ -166,10 +166,23 @@ ls ~/.claude/design-systems/*.md 2>/dev/null | grep -vi readme
 
 구조화 질문(header: "테마 세트"):
 - **큐레이션 3–5종 (추천)** — 목적·무드에 맞는 디자인시스템 몇 종 (+ 원하면 커스텀 오리지널 1종을 섞어)
-- **라이브러리 전체 (74종)** — `scripts/gen-themes.py`로 전 브랜드를 스위처에 주입 (examples/demo.html 방식)
+- **라이브러리 전체 (브랜드 74종 + 색 테마 8종)** — `scripts/gen-themes.py`로 전체를 스위처에 주입 (examples/demo.html 방식)
 - **커스텀 위주** — 직접 디자인한 오리지널 테마 1–2종 + 대비용 디자인시스템 1–2종
 
 라이브러리 시스템은 YAML frontmatter(colors/typography/rounded/spacing/components)를 파싱해 CSS 변수로 매핑하고(§3), 웹 타입 토큰을 1920×1080 스테이지용으로 ~2–2.5× 스케일, 한글 폴백(Noto Serif/Sans KR) 주입 — 상세는 EXTERNAL_DESIGN_SYSTEMS.md. 대량이면 `gen-themes.py`가 `.theme-*` 블록과 `<option>`을 마커 사이에 자동 주입한다.
+
+**색 테마 (`design-systems/pitch-*.md`)** — 브랜드가 아니라 배색만 정의한 자체 테마. 글꼴과 간격은 덱 기본값을 따르고 색 변수만 바뀐다. 브랜드 색이 주제와 안 맞을 때 큐레이션 세트에 섞어 쓴다. 파일마다 색 역할 표와 사용 요령이 있으므로 고른 테마의 본문을 읽고 적용한다.
+
+| 테마 | 바탕 | 배색 |
+| --- | --- | --- |
+| `pitch-forest` | 밝음 | 흰 바탕, 짙은 녹색 |
+| `pitch-terracotta` | 밝음 | 크림 바탕, 남색 글자, 테라코타 |
+| `pitch-swiss` | 밝음 | 회백색 바탕, 검정 |
+| `pitch-blush` | 밝음 | 옅은 분홍 바탕, 진한 분홍 |
+| `pitch-mint` | 어두움 | 짙은 회색 바탕, 민트 |
+| `pitch-midnight` | 어두움 | 짙은 남색 바탕, 청록과 하늘색 |
+| `pitch-violet` | 어두움 | 남보라 바탕, 밝은 보라 |
+| `pitch-ember` | 어두움 | 검정 바탕, 주황 |
 
 ### Step 2.0: 기본 테마 프리뷰 3장
 
@@ -273,7 +286,7 @@ Phase 1 콘텐츠 + Phase 2 스타일로 풀 덱 생성. 이미지가 없으면 
 | [scripts/inline-motion.py](scripts/inline-motion.py) · [scripts/motion-capture.sh](scripts/motion-capture.sh) | 단일 HTML 묶기 · 멈춤 지점 검사, PNG, PDF, 영상 출력 | 움직임 장면 덱 |
 | [scripts/add-design-system.sh](scripts/add-design-system.sh) | getdesign.md 카탈로그에서 디자인시스템 받기 (`--list`/`--all`/`<brand>`/`--force`) | 라이브러리에 없는 브랜드가 필요할 때 |
 | [scripts/gen-themes.py](scripts/gen-themes.py) | 라이브러리 → 덱에 `.theme-*` CSS + `<option>` 자동 주입 (마커 사이) | 멀티테마 스위처 덱 생성 |
-| [design-systems/](design-systems/) | 번들된 디자인시스템 라이브러리 (getdesign.md, 74종) | Phase 2 |
+| [design-systems/](design-systems/) | 번들된 디자인시스템 라이브러리 (getdesign.md 74종) + 자체 색 테마 `pitch-*` 8종 | Phase 2 |
 | [examples/](examples/) | 데모 덱(테마 스위처 + 단축키 + 즐겨찾기) | 참고 |
 | [html-template.md](html-template.md) | HTML 아키텍처·JS 기능 레퍼런스 | Phase 3 참고 |
 | [STYLE_PRESETS.md](STYLE_PRESETS.md) · [animation-patterns.md](animation-patterns.md) | 프리셋·애니메이션 레퍼런스 | 필요 시 |
