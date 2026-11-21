@@ -8,7 +8,7 @@ description: HTML 발표자료를 처음부터 만드는 스킬 — 고정 16:9 
 제로 디펜던시로 애니메이션이 풍부한 **단일 HTML 발표자료**를 만드는 스킬. 브라우저에서 그대로 열리며 빌드 도구가 필요 없다. 세 축으로 구성된다:
 
 1. **고정 16:9 스테이지 엔진** — `viewport-base.css` (스케일 스테이지 + 부트스트랩 스크립트)
-2. **디자인시스템 테마** — 브랜드 토큰 라이브러리(74종 번들)와 자체 색 테마(`pitch-*` 8종)를 파싱해 라이브 테마 스위처로 (단축키·즐겨찾기·도움말 포함)
+2. **테마** — 색 테마 라이브러리(`pitch-*` 8종, 기본 테마 `ibm`)를 파싱해 라이브 테마 스위처로 (단축키·즐겨찾기·도움말 포함)
 3. **Refinement Mode** — 배치 편집 프로토콜 (요청 1회 = 변경 리스트 전체 처리)
 
 ## 덱 종류 둘
@@ -151,12 +151,13 @@ description: HTML 발표자료를 처음부터 만드는 스킬 — 고정 16:9 
 
 대부분 취향을 말로 못 하므로 **시각 프리뷰 3장**을 생성해 비교하게 한다. "옵션 원해요?"라고 묻지 말고 바로 보여준다.
 
-### Step 2.0a: 디자인시스템 라이브러리 감지 (항상)
+### Step 2.0a: 테마 라이브러리 감지 (항상)
 
 ```bash
-ls ~/.claude/design-systems/*.md 2>/dev/null | grep -vi readme
-# 플러그인 번들 사용 시: <plugin>/design-systems/*.md
+ls ~/.claude/skills/zoona-slides/design-systems/*.md 2>/dev/null | grep -vi readme
 ```
+
+라이브러리는 스킬 폴더의 `design-systems/`만 읽는다. 브랜드 테마 74종은 2026-11-21에 삭제했으므로 `~/.claude/design-systems/`에 남은 브랜드 파일은 쓰지 않는다.
 
 파싱·매핑·타입 스케일·한글 폴백·멀티테마 스위처 생성의 전체 규칙은 **[EXTERNAL_DESIGN_SYSTEMS.md](EXTERNAL_DESIGN_SYSTEMS.md)** 참고.
 
@@ -165,13 +166,13 @@ ls ~/.claude/design-systems/*.md 2>/dev/null | grep -vi readme
 어떤 테마들을 구울지 정한다. 어느 쪽을 골라도 결과 덱은 멀티테마 + 스위처다.
 
 구조화 질문(header: "테마 세트"):
-- **큐레이션 3–5종 (추천)** — 목적·무드에 맞는 디자인시스템 몇 종 (+ 원하면 커스텀 오리지널 1종을 섞어)
-- **라이브러리 전체 (브랜드 74종 + 색 테마 8종)** — `scripts/gen-themes.py`로 전체를 스위처에 주입 (examples/demo.html 방식)
-- **커스텀 위주** — 직접 디자인한 오리지널 테마 1–2종 + 대비용 디자인시스템 1–2종
+- **큐레이션 3–5종 (추천)** — 목적·무드에 맞는 색 테마 몇 종 (+ 원하면 커스텀 오리지널 1종을 섞어)
+- **라이브러리 전체** — `scripts/gen-themes.py`로 라이브러리의 모든 테마를 스위처에 주입 (examples/demo.html 방식)
+- **커스텀 위주** — 직접 디자인한 오리지널 테마 1–2종 + 대비용 색 테마 1–2종
 
-라이브러리 시스템은 YAML frontmatter(colors/typography/rounded/spacing/components)를 파싱해 CSS 변수로 매핑하고(§3), 웹 타입 토큰을 1920×1080 스테이지용으로 ~2–2.5× 스케일, 한글 폴백(Noto Serif/Sans KR) 주입 — 상세는 EXTERNAL_DESIGN_SYSTEMS.md. 대량이면 `gen-themes.py`가 `.theme-*` 블록과 `<option>`을 마커 사이에 자동 주입한다.
+라이브러리 파일은 YAML frontmatter의 `colors:`를 CSS 변수로 매핑한다(EXTERNAL_DESIGN_SYSTEMS.md §3). 브랜드 파일을 따로 받아 쓸 때만 타입 토큰 스케일(1920×1080 스테이지용 ~2–2.5×)과 한글 폴백 규칙까지 적용한다. 대량이면 `gen-themes.py`가 `.theme-*` 블록과 `<option>`을 마커 사이에 자동 주입한다.
 
-**색 테마 (`design-systems/pitch-*.md`)** — 브랜드가 아니라 배색만 정의한 자체 테마. 글꼴과 간격은 덱 기본값을 따르고 색 변수만 바뀐다. 브랜드 색이 주제와 안 맞을 때 큐레이션 세트에 섞어 쓴다. 파일마다 색 역할 표와 사용 요령이 있으므로 고른 테마의 본문을 읽고 적용한다.
+**색 테마 (`design-systems/pitch-*.md`)** — 배색만 정의한 자체 테마이고 라이브러리의 본체다. 글꼴과 간격은 덱 기본값을 따르고 색 변수만 바뀐다. 특정 브랜드 테마가 필요하면 `scripts/add-design-system.sh <brand>`로 그때 받는다. 파일마다 색 역할 표와 사용 요령이 있으므로 고른 테마의 본문을 읽고 적용한다.
 
 | 테마 | 바탕 | 배색 |
 | --- | --- | --- |
@@ -186,7 +187,7 @@ ls ~/.claude/design-systems/*.md 2>/dev/null | grep -vi readme
 
 ### Step 2.0: 기본 테마 프리뷰 3장
 
-세트 안에서 **기본(첫 화면) 테마 후보**를 정하려고, 서로 뚜렷이 다른 단일 슬라이드 프리뷰 3장을 생성한다. 최소 1장은 디자인시스템 기반, 최소 1장은 커스텀 오리지널, 나머지 1장은 대비가 가장 강한 쪽으로. (나머지 세트 테마는 스위처에 함께 실리므로 여기선 "첫 화면"만 고르는 것.)
+세트 안에서 **기본(첫 화면) 테마 후보**를 정하려고, 서로 뚜렷이 다른 단일 슬라이드 프리뷰 3장을 생성한다. 최소 1장은 라이브러리 색 테마 기반, 최소 1장은 커스텀 오리지널, 나머지 1장은 대비가 가장 강한 쪽으로. (나머지 세트 테마는 스위처에 함께 실리므로 여기선 "첫 화면"만 고르는 것.)
 
 **커스텀 디자인 규칙**: Design Aesthetics 준수(AI slop 금지, 기본 폰트/색/레이아웃 금지). 뚜렷한 시각적 테제(개성 서체 + 커밋된 팔레트 + 인지 가능한 레이아웃 시스템 + 강한 분위기/그래픽 장치). 풀 덱(섹션/콘텐츠/인용/비교/마무리)으로 확장 가능해야.
 
@@ -286,7 +287,7 @@ Phase 1 콘텐츠 + Phase 2 스타일로 풀 덱 생성. 이미지가 없으면 
 | [scripts/inline-motion.py](scripts/inline-motion.py) · [scripts/motion-capture.sh](scripts/motion-capture.sh) | 단일 HTML 묶기 · 멈춤 지점 검사, PNG, PDF, 영상 출력 | 움직임 장면 덱 |
 | [scripts/add-design-system.sh](scripts/add-design-system.sh) | getdesign.md 카탈로그에서 디자인시스템 받기 (`--list`/`--all`/`<brand>`/`--force`) | 라이브러리에 없는 브랜드가 필요할 때 |
 | [scripts/gen-themes.py](scripts/gen-themes.py) | 라이브러리 → 덱에 `.theme-*` CSS + `<option>` 자동 주입 (마커 사이) | 멀티테마 스위처 덱 생성 |
-| [design-systems/](design-systems/) | 번들된 디자인시스템 라이브러리 (getdesign.md 74종) + 자체 색 테마 `pitch-*` 8종 | Phase 2 |
+| [design-systems/](design-systems/) | 테마 라이브러리 — 색 테마 `pitch-*` 8종, 기본 테마 `ibm` | Phase 2 |
 | [examples/](examples/) | 데모 덱(테마 스위처 + 단축키 + 즐겨찾기) | 참고 |
 | [html-template.md](html-template.md) | HTML 아키텍처·JS 기능 레퍼런스 | Phase 3 참고 |
 | [STYLE_PRESETS.md](STYLE_PRESETS.md) · [animation-patterns.md](animation-patterns.md) | 프리셋·애니메이션 레퍼런스 | 필요 시 |

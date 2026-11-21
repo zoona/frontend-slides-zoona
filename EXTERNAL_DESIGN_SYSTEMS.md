@@ -1,8 +1,14 @@
 # EXTERNAL_DESIGN_SYSTEMS.md
 
 How frontend-slides detects, parses, and applies user-curated **DESIGN.md** files as slide
-design systems. Read this whenever the design-system library at `~/.claude/design-systems/`
-has 1+ files (SKILL.md Phase 2, Step 2.0a).
+design systems. Read this whenever the theme library at the skill's `design-systems/` has 1+
+files (SKILL.md Phase 2, Step 2.0a).
+
+> **2026-11-21 — bundled brand library removed.** `design-systems/` now ships the color themes
+> (`pitch-*.md`: Format A, `colors:` only, fonts and spacing stay at deck defaults) plus `ibm.md`.
+> The rules below still apply to any brand file fetched on demand with
+> `scripts/add-design-system.sh`; brand names in the examples (stripe, linear, …) refer to such
+> fetched files, not to bundled ones.
 
 The library is populated from **getdesign.md** (mirror of the open-source
 [VoltAgent/awesome-design-md](https://github.com/VoltAgent/awesome-design-md) catalog).
@@ -26,7 +32,7 @@ awk '/^---$/{c++} c==1&&/^colors:/{print "STRUCTURED"; exit}' <file>.md
 | **A. Structured (token frontmatter)** | Starts with `---`, frontmatter has `colors:`, `typography:`, `rounded:`, `spacing:`, `components:` | Parse the YAML tokens directly (§1) |
 | **B. Prose (9 numbered sections)** | No token frontmatter; body is `## 1. Visual Theme…` → `## 9. Agent Prompt Guide` | Extract tokens from the numbered sections (§2) |
 
-In the current curated set: **A** = stripe, linear, vercel, notion, figma, apple, claude,
+In the former bundled set: **A** = stripe, linear, vercel, notion, figma, apple, claude,
 nvidia, framer, airbnb. **B** = spotify, tesla. The on-demand script can pull either — always
 detect per file.
 
@@ -192,7 +198,7 @@ a background field). Do not literally copy the brand's marketing content — bor
 Decks are **always multi-theme** (§Step 2.0c-MIX). This step only picks which system is the
 **default (first-screen) theme**; the rest of the chosen set still gets baked in with the switcher.
 
-1. **List** available systems: `ls ~/.claude/design-systems/*.md | grep -vi readme`. Show the
+1. **List** available systems: `ls <skill>/design-systems/*.md | grep -vi readme`. Show the
    user their `name`/description (Format A: frontmatter `description`; Format B: first paragraph
    of `## 1. Visual Theme`). Ask which one is the default (structured-question UI, header "System").
 2. **Parse** the chosen file per §1/§2 → logical token set.
@@ -230,7 +236,7 @@ with a live theme toggle. (This skill has no single-theme output.)
 
 ```bash
 scripts/add-design-system.sh --list          # show all 74 available brands from getdesign.md
-scripts/add-design-system.sh linear.app       # fetch one into ~/.claude/design-systems/
+scripts/add-design-system.sh linear.app       # fetch one into <skill>/design-systems/
 scripts/add-design-system.sh stripe vercel notion   # several at once
 ```
 

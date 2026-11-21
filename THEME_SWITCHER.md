@@ -12,7 +12,7 @@ stage.
 
 ## How it works
 
-1. Each theme is a class that **overrides CSS custom properties** — `.theme-stripe`, `.theme-linear`,
+1. Each theme is a class that **overrides CSS custom properties** — `.theme-pitch-forest`, `.theme-pitch-mint`,
    … — applied to a `.deck-root` wrapper. Custom properties inherit, so every descendant that reads
    `var(--accent)` etc. reskins instantly when the class changes.
 2. The `<select>` options' `value` = the theme class name. On `change`, JS removes all theme classes
@@ -20,7 +20,7 @@ stage.
    load.
 
 **Hard requirement for it to actually work:** every color / font / radius in slide markup must read
-from a CSS variable — **no hardcoded hex or font-family in slides**. If a slide hardcodes `#533afd`,
+from a CSS variable — **no hardcoded hex or font-family in slides**. If a slide hardcodes `#236c5c`,
 that pixel won't reskin. Map each system's tokens to the same variable names (see
 EXTERNAL_DESIGN_SYSTEMS.md §3) and only the values differ per theme.
 
@@ -31,13 +31,13 @@ EXTERNAL_DESIGN_SYSTEMS.md §3) and only the values differ per theme.
 Wrap the whole deck in `.deck-root`; the switcher is a sibling of `.deck-viewport`, both inside it:
 
 ```html
-<div class="deck-root theme-stripe">        <!-- theme class lives here; JS swaps it -->
+<div class="deck-root theme-pitch-forest">        <!-- theme class lives here; JS swaps it -->
   <!-- === THEME SWITCHER (off-stage, bottom-right) === -->
   <div class="theme-switch deck-ui" role="group" aria-label="테마 선택">
     <select id="theme-select" aria-label="테마">
-      <option value="theme-stripe" selected>Stripe</option>
-      <option value="theme-linear">Linear</option>
-      <option value="theme-notion">Notion</option>
+      <option value="theme-pitch-forest" selected>Pitch Forest</option>
+      <option value="theme-pitch-mint">Pitch Mint</option>
+      <option value="theme-pitch-swiss">Pitch Swiss</option>
     </select>
   </div>
 
@@ -49,7 +49,7 @@ Wrap the whole deck in `.deck-root`; the switcher is a sibling of `.deck-viewpor
 </div>
 ```
 
-Populate one `<option>` per theme baked into the deck, label = the brand's display name. The first
+Populate one `<option>` per theme baked into the deck, label = the theme's display name. The first
 option (or the persisted one) is the default; keep its class on `.deck-root` in the initial HTML so
 there's no flash before JS runs.
 
@@ -60,17 +60,14 @@ the same variable set for every theme (only values change):
 
 ```css
 :root{                     /* fallback / shared geometry */
-  --bg:#fff; --surface:#f6f9fc; --fg:#0d253d; --text-muted:#64748d;
-  --accent:#533afd; --on-accent:#fff; --border:#e3e8ee;
-  --font-display:'Satoshi','Noto Sans KR',system-ui,sans-serif;
-  --font-body:'Satoshi','Noto Sans KR',system-ui,sans-serif;
+  --bg:#fff; --surface:#f1f5f4; --fg:#10221d; --text-muted:#5a6b66;
+  --accent:#236c5c; --on-accent:#fff; --border:#d9e3e0;
+  --font-display:'Inter Tight','Noto Sans KR',system-ui,sans-serif;
+  --font-body:'Inter Tight','Noto Sans KR',system-ui,sans-serif;
 }
-.theme-stripe{ --bg:#fff; --surface:#f6f9fc; --fg:#0d253d; --accent:#533afd; --on-accent:#fff; --border:#e3e8ee;
-  --font-display:'Satoshi','Noto Sans KR',sans-serif; }
-.theme-linear{ --bg:#0d0e12; --surface:#16171d; --fg:#f7f8f8; --text-muted:#8a8f98; --accent:#5e6ad2; --on-accent:#fff; --border:#23252c;
-  --font-display:'Inter Tight','Noto Sans KR',sans-serif; }
-.theme-notion{ --bg:#ffffff; --surface:#f7f6f3; --fg:#37352f; --text-muted:#787774; --accent:#2383e2; --on-accent:#fff; --border:#e9e9e7;
-  --font-display:'Newsreader','Noto Serif KR',serif; }
+.theme-pitch-forest{ --bg:#ffffff; --surface:#f1f5f4; --fg:#10221d; --text-muted:#5a6b66; --accent:#236c5c; --on-accent:#fff; --border:#d9e3e0; }
+.theme-pitch-mint{ --bg:#22232b; --surface:#2c2d35; --fg:#f7f9f9; --text-muted:#a3a6b1; --accent:#14b58a; --on-accent:#0c1f1a; --border:#3d3f4a; }
+.theme-pitch-swiss{ --bg:#f7f6f9; --surface:#ebebed; --fg:#0a0a0a; --text-muted:#5c6168; --accent:#161e24; --on-accent:#f7f6f9; --border:#d5d5da; }
 /* slides then use: background:var(--bg); color:var(--fg); … accent:var(--accent) */
 ```
 
@@ -97,7 +94,7 @@ The select reads theme vars too, so it stays legible on light *and* dark themes.
   box-shadow:0 6px 20px rgba(0,0,0,.16);
   transition:background .3s ease, color .3s ease, border-color .3s ease;
 }
-.theme-switch select:focus-visible{ outline:2px solid var(--accent,#533afd); outline-offset:2px; }
+.theme-switch select:focus-visible{ outline:2px solid var(--accent,#236c5c); outline-offset:2px; }
 @media (prefers-reduced-motion: reduce){ .theme-switch select{ transition:none; } }
 ```
 
@@ -140,14 +137,14 @@ Paste alongside the DECK BOOTSTRAP SCRIPT:
   spacing rhythm, and the 1920×1080 measurements stay constant so switching never reflows.
 - After generating, screenshot **each** theme option: a mapped palette can fail contrast on a layout
   tuned for another system. Fix per-theme var overrides; do not drop the switcher.
-- The switcher label is the brand display name (Format A frontmatter `name`, or the `## 1.` title
-  for prose files) — cleaned up (e.g. "Stripi-Inspired-design-analysis" → "Stripe").
+- The switcher label is the theme display name (Format A frontmatter `name`, or the `## 1.` title
+  for prose files) — cleaned up (e.g. "IBM-design-analysis" → "IBM Carbon").
 
 ---
 
 ## 5. Keyboard shortcuts + favorites (many-theme decks)
 
-When a deck bakes in *many* themes (e.g. the whole getdesign.md library via `gen-themes.py`), the
+When a deck bakes in *many* themes (e.g. the whole theme library via `gen-themes.py`), the
 plain `<select>` isn't enough. Add keyboard cycling and a favorites system.
 
 ### Shortcuts

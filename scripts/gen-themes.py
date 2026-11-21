@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-"""gen-themes.py — build frontend-slides theme-switcher blocks from the local
-design-system library (~/.claude/design-systems/*.md, getdesign.md catalog).
+"""gen-themes.py — build zoona-slides theme-switcher blocks from the bundled
+theme library (../design-systems/*.md: pitch-* color themes, ibm, plus any brand
+file fetched with add-design-system.sh).
 
 For every Format-A file (YAML-ish frontmatter with a `colors:` block) it maps
 tokens -> CSS variables (per EXTERNAL_DESIGN_SYSTEMS.md §3), detects light/dark
@@ -13,6 +14,7 @@ It then injects those into a target HTML between the markers:
   <!-- THEME-OPTIONS:START --> ... <!-- THEME-OPTIONS:END -->
 
 Usage:  gen-themes.py <target.html> [--default <slug>]
+Without --default the first available of PREFERRED_DEFAULT is used.
 Prose-format files (no `colors:`) are skipped and reported.
 """
 import os, re, sys, glob
@@ -22,6 +24,9 @@ _here = os.path.dirname(os.path.abspath(__file__))
 _bundled = os.path.normpath(os.path.join(_here, "..", "design-systems"))
 DS_DIR = os.environ.get("DESIGN_SYSTEMS_DIR") or (
     _bundled if os.path.isdir(_bundled) else os.path.expanduser("~/.claude/design-systems"))
+
+# --default 를 안 주면 이 순서로 처음 있는 테마가 기본(첫 화면)
+PREFERRED_DEFAULT = ['ibm', 'pitch-forest']
 
 HEX = re.compile(r'^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$')
 
@@ -184,6 +189,8 @@ def main():
 
     if not built:
         sys.exit("no parseable themes found in " + DS_DIR)
+    if not default:
+        default = next((s for s in PREFERRED_DEFAULT if s in built), None)
 
     # order: default first (if given & present), else alphabetical
     results = [build(os.path.join(DS_DIR, s + '.md')) for s in built]
