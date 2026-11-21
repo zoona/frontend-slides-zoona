@@ -116,12 +116,12 @@ img, svg, video { display: block; max-width: 100%; }
 }
 
 /* THEME-BLOCKS:START (auto-generated) */
-.theme-ibm{
-  --bg:#ffffff; --bg-2:#f4f4f4; --fg:#161616; --muted:#8c8c8c;
-  --accent:#0f62fe; --accent-2:#0f62fe;
-  --line:#e0e0e0;
-  --glow-1:rgba(15,98,254,0.12); --glow-2:rgba(15,98,254,0.09);
-  --stroke-ghost:rgba(22,22,22,0.07);
+.theme-pitch-forest{
+  --bg:#ffffff; --bg-2:#f1f5f4; --fg:#10221d; --muted:#5a6b66;
+  --accent:#236c5c; --accent-2:#134339;
+  --line:#d9e3e0;
+  --glow-1:rgba(35,108,92,0.12); --glow-2:rgba(19,67,57,0.09);
+  --stroke-ghost:rgba(16,34,29,0.07);
   --font-display:'Inter Tight','Noto Sans KR',sans-serif;
   --font-mono:'Space Mono','Noto Sans KR',monospace;
   --grain-blend:multiply;
@@ -145,16 +145,6 @@ img, svg, video { display: block; max-width: 100%; }
   --font-display:'Inter Tight','Noto Sans KR',sans-serif;
   --font-mono:'Space Mono','Noto Sans KR',monospace;
   --grain-blend:screen;
-}
-.theme-pitch-forest{
-  --bg:#ffffff; --bg-2:#f1f5f4; --fg:#10221d; --muted:#5a6b66;
-  --accent:#236c5c; --accent-2:#134339;
-  --line:#d9e3e0;
-  --glow-1:rgba(35,108,92,0.12); --glow-2:rgba(19,67,57,0.09);
-  --stroke-ghost:rgba(16,34,29,0.07);
-  --font-display:'Inter Tight','Noto Sans KR',sans-serif;
-  --font-mono:'Space Mono','Noto Sans KR',monospace;
-  --grain-blend:multiply;
 }
 .theme-pitch-midnight{
   --bg:#071629; --bg-2:#0b2537; --fg:#eef5f8; --muted:#8da2b3;
@@ -424,7 +414,7 @@ img, svg, video { display: block; max-width: 100%; }
 <!-- ========================================================================
      DECK ROOT — theme-* 클래스가 여기 붙고, 스위처가 이걸 교체
      ===================================================================== -->
-<div class="deck-root theme-ibm" data-deck="frontend-slides-demo">
+<div class="deck-root theme-pitch-forest" data-deck="frontend-slides-demo">
 
   <!-- === THEME SWITCHER (off-stage, 우하단) === -->
   <div class="theme-switch deck-ui" role="group" aria-label="테마 선택">
@@ -433,10 +423,9 @@ img, svg, video { display: block; max-width: 100%; }
     <span class="select-wrap">
     <select id="theme-select" aria-label="테마">
       <!-- THEME-OPTIONS:START -->
-      <option selected value="theme-ibm">Ibm</option>
+      <option selected value="theme-pitch-forest">Pitch Forest</option>
       <option value="theme-pitch-blush">Pitch Blush</option>
       <option value="theme-pitch-ember">Pitch Ember</option>
-      <option value="theme-pitch-forest">Pitch Forest</option>
       <option value="theme-pitch-midnight">Pitch Midnight</option>
       <option value="theme-pitch-mint">Pitch Mint</option>
       <option value="theme-pitch-swiss">Pitch Swiss</option>
@@ -480,7 +469,7 @@ img, svg, video { display: block; max-width: 100%; }
             <div class="meta-left">
               <span>AUTHOR&nbsp;&nbsp;<b>hozoon</b></span>
               <span>2026</span>
-              <span>THEME&nbsp;&nbsp;<b id="cur-theme">Ibm</b></span>
+              <span>THEME&nbsp;&nbsp;<b id="cur-theme">Pitch Forest</b></span>
             </div>
             <div class="page-num">01 — 01</div>
           </div>

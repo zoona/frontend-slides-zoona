@@ -4,8 +4,8 @@ How frontend-slides detects, parses, and applies user-curated **DESIGN.md** file
 design systems. Read this whenever the theme library at the skill's `design-systems/` has 1+
 files (SKILL.md Phase 2, Step 2.0a).
 
-> **2026-11-21 — bundled brand library removed.** `design-systems/` now ships the color themes
-> (`pitch-*.md`: Format A, `colors:` only, fonts and spacing stay at deck defaults) plus `ibm.md`.
+> **2026-11-22 — bundled brand library removed.** `design-systems/` now ships only the color themes
+> (`pitch-*.md`: Format A, `colors:` only, fonts and spacing stay at deck defaults).
 > The rules below still apply to any brand file fetched on demand with
 > `scripts/add-design-system.sh`; brand names in the examples (stripe, linear, …) refer to such
 > fetched files, not to bundled ones.

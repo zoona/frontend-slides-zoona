@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """gen-themes.py — build zoona-slides theme-switcher blocks from the bundled
-theme library (../design-systems/*.md: pitch-* color themes, ibm, plus any brand
+theme library (../design-systems/*.md: pitch-* color themes, plus any brand
 file fetched with add-design-system.sh).
 
 For every Format-A file (YAML-ish frontmatter with a `colors:` block) it maps
@@ -26,7 +26,7 @@ DS_DIR = os.environ.get("DESIGN_SYSTEMS_DIR") or (
     _bundled if os.path.isdir(_bundled) else os.path.expanduser("~/.claude/design-systems"))
 
 # --default 를 안 주면 이 순서로 처음 있는 테마가 기본(첫 화면)
-PREFERRED_DEFAULT = ['ibm', 'pitch-forest']
+PREFERRED_DEFAULT = ['pitch-forest']
 
 HEX = re.compile(r'^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$')
 

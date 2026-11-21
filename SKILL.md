@@ -8,7 +8,7 @@ description: HTML 발표자료를 처음부터 만드는 스킬 — 고정 16:9 
 제로 디펜던시로 애니메이션이 풍부한 **단일 HTML 발표자료**를 만드는 스킬. 브라우저에서 그대로 열리며 빌드 도구가 필요 없다. 세 축으로 구성된다:
 
 1. **고정 16:9 스테이지 엔진** — `viewport-base.css` (스케일 스테이지 + 부트스트랩 스크립트)
-2. **테마** — 색 테마 라이브러리(`pitch-*` 8종, 기본 테마 `ibm`)를 파싱해 라이브 테마 스위처로 (단축키·즐겨찾기·도움말 포함)
+2. **테마** — 색 테마 라이브러리(`pitch-*` 8종, 기본 테마 `pitch-forest`)를 파싱해 라이브 테마 스위처로 (단축키·즐겨찾기·도움말 포함)
 3. **Refinement Mode** — 배치 편집 프로토콜 (요청 1회 = 변경 리스트 전체 처리)
 
 ## 덱 종류 둘
@@ -31,7 +31,7 @@ description: HTML 발표자료를 처음부터 만드는 스킬 — 고정 16:9 
   - 큰 숫자 `note.big`은 몇 장, 한 가지 뜻에만(장마다 붙이면 식상하다고 돌아옴, 2026-11-11). 숫자는 화면 안에서 세며 바뀌게 그리는 쪽이 먼저. 우상단 `badge`는 런타임이 그리지 않는다(`badgeShow:true`일 때만). 실제 수치의 출처는 화면 하단 글로, 지어낸 값이 실측처럼 보이는 그래프에만 "값은 예시"를 화면 글로 적는다(장마다 "예시" 배지를 붙였다가 대부분 불필요하다고 돌아옴, 2026-11-13).
   - **화면 방식은 mg(모션그래픽)로 시작한다** (`DeckMotion.init({look:"mg"})`, 2026-11-16 소유자 확인). 밝은 바탕과 점 격자, 흰 카드, 강조색 하나, 스프링 등장, 이어지는 바탕과 장 넘김, 머무는 동안 느린 접근이 런타임에서 붙는다. 빛 번짐, 입자, 그라디언트, 뜻 없는 배경 장식 숫자는 쓰지 않는다. 카메라와 이어지는 요소는 장면 데이터에서 정한다. 기준과 숫자는 MOTION_WAYS.md "모션그래픽 방식". `M` 키로 종전 방식과 비교
   - **화면 디자인은 덱마다 바꾸지 않고, 연출과 시각화를 주제에 맞춘다** (2026-11-17 소유자). 바탕, 색, 글꼴, 카드는 mg 그대로 둔다(일관성이 오히려 좋음). 대신 장마다 "이 주제의 사물이 무엇인가"를 먼저 정하고 그 사물을 morph 요소로 그린다. 시험 보안 덱의 예: 답안 표기란이 채워지는 표지, 160칸 중 1칸만 틀린 답안표, 답안지와 도장, 옮겨 쓰며 바뀌는 답안 문장, 응시자 점이 걸러지는 선별, 어절 단위로 바뀐 곳을 칠하는 비교. canvas의 토글과 커서, 흰 카드를 곡선으로 잇는 연결, 카드를 따라가는 카메라, 글자만 있는 표지는 덱마다 반복되면 "이전 주제와 똑같다"고 돌아온다(같은 날 지적). 주제에 실제 스위치, 연결, 경로가 있을 때만 쓴다
-  - 기본 테마는 어두운 바탕(라우터 덱의 스타일 블록을 그대로 가져옴), `t`로 밝은 테마. 기본 덱의 IBM Carbon 기본값은 모션 덱에 적용하지 않는다.
+  - 기본 테마는 어두운 바탕(라우터 덱의 스타일 블록을 그대로 가져옴), `t`로 밝은 테마. 기본 덱의 기본 테마(`pitch-forest`)는 모션 덱에 적용하지 않는다.
   - `deck/tools/build-deck.py` 같은 생성 스크립트로 만든다. 좌표 계산과 허브 칸 rect를 코드로 두어야 수정이 반복된다.
   - 채운 상자(`fill` 0.8 이상)의 글자는 `ltone: "on"`. 그러지 않으면 글자가 바탕과 같은 색이 된다.
   - 문장 위주 장(부르는 말, 정리)은 일반 슬라이드나 cards로 두되 한두 장에 그친다.
@@ -157,7 +157,7 @@ description: HTML 발표자료를 처음부터 만드는 스킬 — 고정 16:9 
 ls ~/.claude/skills/zoona-slides/design-systems/*.md 2>/dev/null | grep -vi readme
 ```
 
-라이브러리는 스킬 폴더의 `design-systems/`만 읽는다. 브랜드 테마 74종은 2026-11-21에 삭제했으므로 `~/.claude/design-systems/`에 남은 브랜드 파일은 쓰지 않는다.
+라이브러리는 스킬 폴더의 `design-systems/`만 읽는다. 별말이 없으면 기본(첫 화면) 테마는 `pitch-forest`다. 브랜드 테마 74종(IBM Carbon 포함)은 2026-11-21~22에 삭제했으므로 `~/.claude/design-systems/`에 남은 브랜드 파일은 쓰지 않는다.
 
 파싱·매핑·타입 스케일·한글 폴백·멀티테마 스위처 생성의 전체 규칙은 **[EXTERNAL_DESIGN_SYSTEMS.md](EXTERNAL_DESIGN_SYSTEMS.md)** 참고.
 
@@ -287,7 +287,7 @@ Phase 1 콘텐츠 + Phase 2 스타일로 풀 덱 생성. 이미지가 없으면 
 | [scripts/inline-motion.py](scripts/inline-motion.py) · [scripts/motion-capture.sh](scripts/motion-capture.sh) | 단일 HTML 묶기 · 멈춤 지점 검사, PNG, PDF, 영상 출력 | 움직임 장면 덱 |
 | [scripts/add-design-system.sh](scripts/add-design-system.sh) | getdesign.md 카탈로그에서 디자인시스템 받기 (`--list`/`--all`/`<brand>`/`--force`) | 라이브러리에 없는 브랜드가 필요할 때 |
 | [scripts/gen-themes.py](scripts/gen-themes.py) | 라이브러리 → 덱에 `.theme-*` CSS + `<option>` 자동 주입 (마커 사이) | 멀티테마 스위처 덱 생성 |
-| [design-systems/](design-systems/) | 테마 라이브러리 — 색 테마 `pitch-*` 8종, 기본 테마 `ibm` | Phase 2 |
+| [design-systems/](design-systems/) | 테마 라이브러리 — 색 테마 `pitch-*` 8종, 기본 테마 `pitch-forest` | Phase 2 |
 | [examples/](examples/) | 데모 덱(테마 스위처 + 단축키 + 즐겨찾기) | 참고 |
 | [html-template.md](html-template.md) | HTML 아키텍처·JS 기능 레퍼런스 | Phase 3 참고 |
 | [STYLE_PRESETS.md](STYLE_PRESETS.md) · [animation-patterns.md](animation-patterns.md) | 프리셋·애니메이션 레퍼런스 | 필요 시 |

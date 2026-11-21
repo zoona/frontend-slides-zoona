@@ -138,7 +138,7 @@ Paste alongside the DECK BOOTSTRAP SCRIPT:
 - After generating, screenshot **each** theme option: a mapped palette can fail contrast on a layout
   tuned for another system. Fix per-theme var overrides; do not drop the switcher.
 - The switcher label is the theme display name (Format A frontmatter `name`, or the `## 1.` title
-  for prose files) — cleaned up (e.g. "IBM-design-analysis" → "IBM Carbon").
+  for prose files) — cleaned up (e.g. "Stripe-Inspired-design-analysis" → "Stripe").
 
 ---
 
