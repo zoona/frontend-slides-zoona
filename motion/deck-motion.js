@@ -299,10 +299,10 @@ function morph(slide,data,kit){
     B.forEach((b,bi)=>{const set=b.set&&b.set[e.id];const prev=Object.assign({},cur);let d=0;
       if(set){const keys=Object.keys(b.set);d=b.cut?0:set._d!=null?set._d:Math.min(.6*(b.stagger!=null&&b.stagger>.06?b.stagger/.06:1),keys.indexOf(e.id)*(b.stagger==null?.06:b.stagger));cur=Object.assign({},cur,set);if(set.a==null&&prev.a===0)cur.a=1}
       if((b.hide||[]).includes(e.id))cur=Object.assign({},cur,{a:0});
-      e.S.push(Object.assign({},cur));e.D.push(d);delete cur.vdur;delete cur.vease;delete cur.vsteps})});
+      e.S.push(Object.assign({},cur));e.D.push(d);delete cur.vdur;delete cur.vease;delete cur.vsteps;delete cur.move})});
   const MV=B.map(b=>b.cut?.001:(b.move||data.move||.9));
   const FOC=B.map(b=>b.focus?new Set(b.focus):null);const fval=(e,b)=>!FOC[b]||FOC[b].has(e.id)?1:(B[b].focusA==null?.18:B[b].focusA);
-  const stateAt=(e,t)=>{const b=bAt(t);const to0=e.S[b];let to=to0;let from=b?e.S[b-1]:Object.assign({},e.S[0],{a:0});const mv=MV[b],t0=st[b]+e.D[b];let fresh=false;
+  const stateAt=(e,t)=>{const b=bAt(t);const to0=e.S[b];let to=to0;let from=b?e.S[b-1]:Object.assign({},e.S[0],{a:0});const mv=B[b].cut?MV[b]:(to0.move||MV[b]),t0=st[b]+e.D[b];let fresh=false;
     if(from.a===0){from=Object.assign({},to,{a:0});fresh=to.a>0;const en=to.enter;if(fresh&&!B[b].cut)['u','v','frac','p'].forEach(k=>{if(to[k+'0']!=null)from[k]=to[k+'0'];else if(k==='u'&&to.u!=null&&e._pp)from.u=0;else if(k==='p'&&e.type==='burst')from.p=0;else if(k==='frac'&&e.type==='gauge')from.frac=0});
       if(fresh&&en&&!B[b].cut){if(ENTER[en]){from.x=(to.x||0)+ENTER[en][0];from.y=(to.y||0)+ENTER[en][1]}else if(en==='pop'){if(e.type==='box'){from.x=to.x+to.w/2;from.y=to.y+to.h/2;from.w=0;from.h=0}else{from.r=0;from.w=0}}}}
     else if(to.a===0&&from.a>0&&to.exit&&!B[b].cut){to=Object.assign({},to);const ex=to.exit;
@@ -609,7 +609,8 @@ function init(opts){opts=opts||{};
       if(u<1)praf=requestAnimationFrame(frame);else{praf=null;pushClear()}};frame(t0)}
   function stopAnim(){if(raf){cancelAnimationFrame(raf);raf=null}}
   /* 장 사이 줌 전환: 장 JSON에 zoom:{hub:구조도 장 번호(1부터), rect:[x,y,w,h](그 장의 칸)}.
-     구조도에서 다음 장으로 갈 때 그 칸으로 들어가고, 칸이 다른 장끼리는 구조도로 나왔다가 옆 칸으로 들어감 */
+     구조도에서 다음 장으로 갈 때 그 칸으로 들어가고, 칸이 다른 장끼리는 구조도로 나왔다가 옆 칸으로 들어감.
+     들어가는 장의 첫 비트는 그 장이 읽을 크기가 된 뒤에 시작(zAt: 들어가는 줌 .75, 나왔다 들어가는 줌 .88) */
   const box=r=>{const w=r[2],h=w*9/16;return[r[0]+r[2]/2-w/2,r[1]+r[3]/2-h/2,w,h]};
   const zin=(r,p)=>{const k=Math.exp(lerp(0,Math.log(1920/r[2]),p)),cx=r[0]+r[2]/2,cy=r[1]+r[3]/2,sx=lerp(cx,960,p),sy=lerp(cy,540,p);return{k,x:cx-sx/k,y:cy-sy/k}};
   function zoomPlan(a,b){if(Math.abs(a-b)!==1)return null;const za=S[a].zoom,zb=S[b].zoom;
@@ -618,14 +619,14 @@ function init(opts){opts=opts||{};
     if(za&&zb&&za.hub===zb.hub&&za.rect.join()!==zb.rect.join())return{hub:za.hub-1,A:a,B:b,ra:box(za.rect),rb:box(zb.rect)};return null}
   let zraf=null,zdone=null;
   function zoomClear(){if(zraf){cancelAnimationFrame(zraf);zraf=null}S.forEach(s=>{const st=s.el.style;st.transform=st.transformOrigin=st.visibility=st.opacity=st.zIndex=st.transition='';});const f=zdone;zdone=null;if(f)f()}
-  function zoomRun(z,done){zoomClear();zdone=done;const hub=S[z.hub],D=z.ra&&z.rb?1.9:1.25,t0=performance.now();hub.draw(hub.dur);
+  function zoomRun(z,done){zoomClear();zdone=done;const hub=S[z.hub],D=z.ra&&z.rb?1.9:1.25,zAt=z.ra&&z.rb?.88:z.rb?.75:.5,t0=performance.now();hub.draw(hub.dur);
     const L=[[hub,null,1],[z.A!=null&&z.A!==z.hub?S[z.A]:null,z.ra,3],[z.B!=null&&z.B!==z.hub?S[z.B]:null,z.rb,2]];
     L.forEach(([s,,zi])=>{if(!s)return;const st=s.el.style;st.transition='none';st.transformOrigin='0 0';st.visibility='visible';st.zIndex=zi});
     const view=p=>{if(z.ra&&z.rb)return p<.5?zin(z.ra,1-eio(p*2)):zin(z.rb,eio(p*2-1));return z.rb?zin(z.rb,eio(p)):zin(z.ra,1-eio(p))};
     const frame=n=>{const p=Math.min(1,(n-t0)/1000/D),v=view(p);
       L.forEach(([s,r])=>{if(!s)return;const st=s.el.style;if(!r){st.transform=`scale(${v.k}) translate(${-v.x}px,${-v.y}px)`;st.opacity=1;return}
         const f=r[2]*v.k/1920;st.transform=`scale(${v.k}) translate(${r[0]-v.x}px,${r[1]-v.y}px) scale(${r[2]/1920})`;st.opacity=cl((f-.22)/.38)});
-      if(p>=.5&&zdone){const f=zdone;zdone=null;f()}if(p<1)zraf=requestAnimationFrame(frame);else{zraf=null;zoomClear()}};
+      if(p>=zAt&&zdone){const f=zdone;zdone=null;f()}if(p<1)zraf=requestAnimationFrame(frame);else{zraf=null;zoomClear()}};
     zraf=requestAnimationFrame(frame)}
   /* 장 사이 전환 효과: 장 JSON의 enter(또는 일반 장의 data-enter) = flash(흰 섬광) black(검은 화면 컷) wipe(위아래 띠가 닫혔다 열림) blur(흐림에서 또렷하게) pixel(칸 단위로 드러남) */
   const stage=document.querySelector('.deck-stage')||document.body;let tov=null,traf=null,tmid=null;
